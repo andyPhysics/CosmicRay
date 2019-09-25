@@ -37,17 +37,17 @@ HE_stoch_strong = f['tinyTree']['n_he_stoch2'].array()
 
 fig, axes = plt.subplots(3, 2)
 
-axes[0,0].hist(S125,bins=10)
+axes[0,0].hist(S125,bins=5)
 axes[0,0].set_title('S125')
 axes[0,1].hist(Zenith,bins=100)
 axes[0,1].set_title('Zenith')
-axes[1,0].hist(MeanEnergyLoss,bins=10)
+axes[1,0].hist(MeanEnergyLoss,bins=5)
 axes[1,0].set_title('MeanEnergyLoss')
 axes[1,1].hist(HE_stoch_standard,bins=10)
 axes[1,1].set_title('HE Stoch Standard')
 axes[2,0].hist(HE_stoch_strong,bins=10)
 axes[2,0].set_title('HE Stoch Standard')
-
+fig.tight_layout()
 fig.savefig('Output'+args.output_base+'.png')
 
 
