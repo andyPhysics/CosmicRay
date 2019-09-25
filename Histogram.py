@@ -25,17 +25,23 @@ f = uproot.open(file)
 
 S125 = f['tinyTree']['s125'].array()
 
+S125 = np.log10(S125)
+
 Zenith= f['tinyTree']['zenith'].array()
 
 EnergyLoss = zip(f['tinyTree']['eloss_1500'].array(),f['tinyTree']['eloss_1800'].array(),f['tinyTree']['eloss_2100'].array(),f['tinyTree']['eloss_2400'].array())
 
 MeanEnergyLoss = [np.sum(i) for i in EnergyLoss]
 
+MeanEnergyLoss = np.log10(MeanEnergyLoss)
+
 HE_stoch_standard = f['tinyTree']['n_he_stoch'].array()
 
 HE_stoch_strong = f['tinyTree']['n_he_stoch2'].array()
 
 fig, axes = plt.subplots(3, 2)
+
+print(max(MeanEnergyLoss),min(MeanEnergyLoss))
 
 axes[0,0].hist(S125,bins=3)
 axes[0,0].set_title('S125')
