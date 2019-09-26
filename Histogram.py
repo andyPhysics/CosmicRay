@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use('AGG')
 import matplotlib.pylab as plt
 import argparse
+import pandas as pd
 
 parser = argparse.ArgumentParser(description='Process Rooto Files')
 
@@ -56,5 +57,8 @@ axes[2,0].set_title('HE Stoch Standard')
 fig.tight_layout()
 fig.savefig('Output'+args.output_base+'.png')
 
+data = pd.DataFrame({'S125':S125,'Zenith':Zenith,'MeanEnergyLoss':MeanEnergyLoss,'HE_stoch_standard':HE_stoch_standard,'HE_stoch_strong':HE_stoch_strong})
+
+data.to_csv('output'+args.output_base+'.csv',index=True)
 
 
