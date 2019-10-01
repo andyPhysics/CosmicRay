@@ -40,7 +40,13 @@ HE_stoch_standard = f['tinyTree']['n_he_stoch'].array()
 
 HE_stoch_strong = f['tinyTree']['n_he_stoch2'].array()
 
-fig, axes = plt.subplots(3, 2)
+mass = f['tinyTree']['mass'].array()
+
+Energy = f['tinyTree']['energy'].array()
+
+Energy = np.log10(Energy)
+
+fig, axes = plt.subplots(4, 2)
 
 print(max(MeanEnergyLoss),min(MeanEnergyLoss))
 
@@ -54,10 +60,14 @@ axes[1,1].hist(HE_stoch_standard,bins=10)
 axes[1,1].set_title('HE Stoch Standard')
 axes[2,0].hist(HE_stoch_strong,bins=10)
 axes[2,0].set_title('HE Stoch Standard')
+axes[2,1].hist(mass,bins=100)
+axes[2,1].set_title('Mass')
+axes[3,0].hist(Energy,bins=100)
+axes[3,0].set_title('Energy')
 fig.tight_layout()
 fig.savefig('Output'+args.output_base+'.png')
 
-data = pd.DataFrame({'S125':S125,'Zenith':Zenith,'MeanEnergyLoss':MeanEnergyLoss,'HE_stoch_standard':HE_stoch_standard,'HE_stoch_strong':HE_stoch_strong})
+data = pd.DataFrame({'S125':S125,'Zenith':Zenith,'MeanEnergyLoss':MeanEnergyLoss,'HE_stoch_standard':HE_stoch_standard,'HE_stoch_strong':HE_stoch_strong,'mass':mass,'energy':Energy})
 
 data.to_csv('output'+args.output_base+'.csv',index=True)
 
