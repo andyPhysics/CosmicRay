@@ -21,8 +21,6 @@ def get_data(input_file_list):
 
     for i in filelist:
         f = uproot.open(path+'/'+i)
-        Energy = f['tinyTree']['energy'].array()
-        Energy = np.log10(Energy)
         Mass = f['tinyTree']['mass'].array()
         Mass = np.log(Mass)
         S125 = f['tinyTree']['s125'].array()
@@ -35,13 +33,12 @@ def get_data(input_file_list):
         HE_stoch_strong = f['tinyTree']['n_he_stoch2'].array()
        
 
-        x = zip(Energy,Mass)
+        x = Mass
         y = zip(S125,np.cos(Zenith),MeanEnergyLoss,HE_stoch_standard,HE_stoch_strong)
         features += y
         labels += x
-#    features = [minmax_scale(i,feature_range=(-1,1)) for i in features]
     features = np.array(features)
-    labels = np.array(labels)
+    labels = np.concatenate(np.array(labels))
     return labels,features
 
 
@@ -66,7 +63,7 @@ def custom_loss(ytrue,ypred):
     return K.mean(math_ops.square(y_pred1 - y_true1), axis=-1)+10.0*K.mean(math_ops.square(y_pred2 - y_true2), axis=-1)
 
 
-best_model = keras.callbacks.ModelCheckpoint('NN_best.h5',
+best_model = keras.callbacks.ModelCheckpoint('Mass_model_best.h5',
                                              monitor='val_loss',
                                              save_best_only=True,
                                              save_weights_only=False,
@@ -78,7 +75,7 @@ model1 = Dense(7,activation='tanh',use_bias=True,bias_initializer=initializers.C
 
 model1 = Dense(4,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(model1)
 
-predictions = Dense(2,activation='linear')(model1)
+predictions = Dense(1,activation='linear')(model1)
 
 model = Model(inputs=input_layer,outputs=predictions)
 
@@ -87,12 +84,12 @@ opt = keras.optimizers.RMSprop(decay=1e-5)
 model.compile(optimizer=opt , loss = custom_loss)
 
 history = model.fit(train_features,train_labels,
-                    epochs=1000,
+                    epochs=100,
                     validation_data = (test_features,test_labels),
                     callbacks=[best_model])
 
-model.save('First_model.h5')
+model.save('Mass_model.h5')
 
 loss = zip(history.history['loss'],history.history['val_loss'])
 
-np.savetxt('First_model.csv',loss,delimiter=',')
+np.savetxt('Mass_model.csv',loss,delimiter=',')
