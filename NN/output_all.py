@@ -36,7 +36,7 @@ def get_data(input_file_list):
         HE_stoch_strong = f['tinyTree']['n_he_stoch2'].array()
        
 
-        x = zip(Mass,Energy)
+        x = zip(Energy,Mass)
         y = zip(S125,np.cos(Zenith),MeanEnergyLoss,HE_stoch_standard,HE_stoch_strong)
         features += y
         labels += x
