@@ -50,17 +50,20 @@ labels,features = get_data(verification_files)
 
 model = load_model('NN_best.h5')
 
-label_1 = []
+label_predict = []
+label_true = []
 
 for i in verification_files:
     x,y = get_data([i])
     labels_pred = model.predict(y)
-    file_output = zip(x,labels_pred)
-    label_1.append(file_output)
+    label_true.append(x)
+    label_predict.append(labels_pred)
 
 output_labels = model.predict(features)
 
 output = zip(labels,output_labels)
 
-np.save('All_output.npy',output)
-np.save('All_split.npy',label_1)
+labels_dict = {'true':label_true,'pred':label_predict}
+
+np.savez('All_output.npz',output)
+np.savez('All_split.npz',labels_dict)
