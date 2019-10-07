@@ -37,7 +37,13 @@ def get_data(input_file_list):
         y = zip(S125,np.cos(Zenith),MeanEnergyLoss,HE_stoch_standard,HE_stoch_strong)
         features += y
         labels.append(x)
+
+    from keras.models import load_model
+    energy = load_model('models/Energy_best.h5')
     features = np.array(features)
+    my_energy= energy.predict(features)
+    features = np.concatenate([features,my_energy],axis=-1)
+
     labels = np.concatenate(np.array(labels))
     return labels,features
 
@@ -47,21 +53,12 @@ test_labels,test_features = get_data(test_files)
 
 import keras
 from keras import initializers
-from keras.layers import Dense, Dropout, Flatten, Input, Concatenate
-from keras.models import Model
+from keras.layers import Dense, Dropout, Flatten, Input, Concatenate, LeakyReLU,ELU
+from keras.models import Model,load_model
 import keras.backend as K
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import gen_math_ops as math_ops
-
-def custom_loss(ytrue,ypred):
-    y_pred1 = ops.convert_to_tensor(ypred[0])
-    y_pred2 = ops.convert_to_tensor(ypred[1])
-
-    y_true1 = math_ops.cast(ytrue[0], ypred[0].dtype)
-    y_true2 = math_ops.cast(ytrue[1], ypred[1].dtype)
-
-    return K.mean(math_ops.square(y_pred1 - y_true1), axis=-1)+10.0*K.mean(math_ops.square(y_pred2 - y_true2), axis=-1)
-
+import tensorflow as tf
 
 best_model = keras.callbacks.ModelCheckpoint('Mass_model_best.h5',
                                              monitor='val_loss',
@@ -69,11 +66,20 @@ best_model = keras.callbacks.ModelCheckpoint('Mass_model_best.h5',
                                              save_weights_only=False,
                                              mode='auto')
 
-input_layer = Input(shape=(5,))
 
-model1 = Dense(7,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(input_layer)
+input_layer = Input(shape=(6,))
 
-model1 = Dense(4,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(model1)
+model1 = Dense(7,use_bias=True,bias_initializer=initializers.Constant(0.1))(input_layer)
+
+model1 = ELU()(model1)
+
+model1 = Dropout(0.5)(model1)
+
+model1 = Dense(4)(model1)
+
+model1 = ELU()(model1)
+
+model1 = Concatenate(axis=-1)([model1,input_layer])
 
 predictions = Dense(1,activation='linear')(model1)
 
@@ -81,7 +87,7 @@ model = Model(inputs=input_layer,outputs=predictions)
 
 opt = keras.optimizers.RMSprop(decay=1e-5)
 
-model.compile(optimizer=opt , loss = custom_loss)
+model.compile(optimizer=opt , loss = 'mse')
 
 history = model.fit(train_features,train_labels,
                     epochs=100,
