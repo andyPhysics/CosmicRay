@@ -71,7 +71,7 @@ input_layer = Input(shape=(6,))
 
 model1 = Dense(10,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(input_layer)
 
-model2 = Dense(5,activation='tanh')(model1)
+model2 = Dense(5,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(model1)
 
 model1 = Concatenate(axis=-1)([model1,model2,input_layer])
 
@@ -79,8 +79,8 @@ predictions = Dense(1,activation='linear')(model1)
 
 model = Model(inputs=input_layer,outputs=predictions)
 
-opt = keras.optimizers.RMSprop(decay=1e-5)
-#opt = keras.optimizers.Adam(lr=3e-4,decay=1e-5)
+#opt = keras.optimizers.RMSprop(decay=1e-5)
+opt = keras.optimizers.Adam(lr=3e-4,decay=1e-5)
 model.compile(optimizer=opt , loss = 'mse')
 
 history = model.fit(train_features,train_labels,
