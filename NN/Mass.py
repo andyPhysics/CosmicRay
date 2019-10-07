@@ -79,8 +79,8 @@ predictions = Dense(1,activation='linear')(model1)
 
 model = Model(inputs=input_layer,outputs=predictions)
 
-#opt = keras.optimizers.RMSprop(decay=1e-5)
-opt = keras.optimizers.Adam(lr=3e-4,decay=1e-5)
+opt = keras.optimizers.RMSprop(decay=1e-5)
+#opt = keras.optimizers.Adam(lr=3e-4,decay=1e-5)
 model.compile(optimizer=opt , loss = 'mse')
 
 history = model.fit(train_features,train_labels,
