@@ -65,5 +65,5 @@ output = zip(labels,output_labels)
 
 labels_dict = {'true':label_true,'pred':label_predict}
 
-np.savez('All_output.npz',output)
-np.savez('All_split.npz',labels_dict)
+np.save('All_output.npz',output)
+np.save('All_split.npz',labels_dict)
