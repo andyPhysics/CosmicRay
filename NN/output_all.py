@@ -63,7 +63,7 @@ output_labels = model.predict(features)
 
 print(output_labels)
 
-output = zip(labels,output_labels)
+output = {'true':labels,'pred':output_labels}
 
 labels_dict = {'true':label_true,'pred':label_predict}
 
