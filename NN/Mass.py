@@ -69,11 +69,9 @@ best_model = keras.callbacks.ModelCheckpoint('Mass_model_best.h5',
 
 input_layer = Input(shape=(6,))
 
-model1 = Dense(7,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(input_layer)
+model1 = Dense(10,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(input_layer)
 
-output = Dropout(0.8)(model1)
-
-model2 = Dense(4,activation='tanh')(output)
+model2 = Dense(5,activation='tanh')(model1)
 
 model1 = Concatenate(axis=-1)([model1,model2,input_layer])
 
