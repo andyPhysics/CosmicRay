@@ -23,6 +23,7 @@ def get_data(input_file_list):
         f = uproot.open(path+'/'+i)
         Energy = f['tinyTree']['energy'].array()
         Energy = np.log10(Energy)
+        Energy = [1+(3.0/4.0)*i for i in Energy]
         Mass = f['tinyTree']['mass'].array()
         Mass = np.log(Mass)
         S125 = f['tinyTree']['s125'].array()
@@ -39,7 +40,6 @@ def get_data(input_file_list):
         y = zip(S125,np.cos(Zenith),MeanEnergyLoss,HE_stoch_standard,HE_stoch_strong)
         features += y
         labels += x
-#    features = [minmax_scale(i,feature_range=(-1,1)) for i in features]
     features = np.array(features)
     labels = np.array(labels)
     return labels,features
@@ -56,14 +56,14 @@ import keras.backend as K
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import gen_math_ops as math_ops
 
-def custom_loss(ytrue,ypred):
-    y_pred1 = ops.convert_to_tensor(ypred[0])
-    y_pred2 = ops.convert_to_tensor(ypred[1])
+#def custom_loss(ytrue,ypred):
+#    y_pred1 = ops.convert_to_tensor(ypred[0])
+#    y_pred2 = ops.convert_to_tensor(ypred[1])
 
-    y_true1 = math_ops.cast(ytrue[0], ypred[0].dtype)
-    y_true2 = math_ops.cast(ytrue[1], ypred[1].dtype)
+#    y_true1 = math_ops.cast(ytrue[0], ypred[0].dtype)
+#    y_true2 = math_ops.cast(ytrue[1], ypred[1].dtype)
 
-    return K.mean(math_ops.square(y_pred1 - y_true1), axis=-1)+10.0*K.mean(math_ops.square(y_pred2 - y_true2), axis=-1)
+#    return K.mean(math_ops.square(y_pred1 - y_true1), axis=-1)+10.0*K.mean(math_ops.square(y_pred2 - y_true2), axis=-1)
 
 
 best_model = keras.callbacks.ModelCheckpoint('NN_best.h5',
@@ -76,6 +76,8 @@ input_layer = Input(shape=(5,))
 
 model1 = Dense(7,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(input_layer)
 
+model1 = Dropout(0.5)(model1)
+
 model1 = Dense(4,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(model1)
 
 predictions = Dense(2,activation='linear')(model1)
@@ -83,11 +85,11 @@ predictions = Dense(2,activation='linear')(model1)
 model = Model(inputs=input_layer,outputs=predictions)
 
 opt = keras.optimizers.RMSprop(decay=1e-5)
-
-model.compile(optimizer=opt , loss = custom_loss)
+#opt= keras.optimizers.Adam(decay=1e-5,lr=3e-4)
+model.compile(optimizer=opt , loss = 'mse')
 
 history = model.fit(train_features,train_labels,
-                    epochs=1000,
+                    epochs=100,
                     validation_data = (test_features,test_labels),
                     callbacks=[best_model])
 
