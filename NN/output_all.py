@@ -61,6 +61,8 @@ for i in verification_files:
 
 output_labels = model.predict(features)
 
+print(output_labels)
+
 output = zip(labels,output_labels)
 
 labels_dict = {'true':label_true,'pred':label_predict}
