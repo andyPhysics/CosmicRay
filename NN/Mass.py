@@ -71,7 +71,9 @@ input_layer = Input(shape=(6,))
 
 model1 = Dense(7,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(input_layer)
 
-model2 = Dense(4,activation='tanh')(model1)
+output = Dropout(0.8)(model1)
+
+model2 = Dense(4,activation='tanh')(output)
 
 model1 = Concatenate(axis=-1)([model1,model2,input_layer])
 
