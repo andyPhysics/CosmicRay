@@ -46,9 +46,19 @@ def get_data(input_file_list):
     return labels,features
 
 
+def custom_loss(ytrue,ypred):
+    y_pred1 = ops.convert_to_tensor(ypred[0])
+    y_pred2 = ops.convert_to_tensor(ypred[1])
+
+    y_true1 = math_ops.cast(ytrue[0], ypred[0].dtype)
+    y_true2 = math_ops.cast(ytrue[1], ypred[1].dtype)
+
+    return K.mean(math_ops.square(y_pred1 - y_true1), axis=-1)+10.0*K.mean(math_ops.square(y_pred2 - y_true2), axis=-1)
+
+
 labels,features = get_data(verification_files)
 
-model = load_model('NN_best.h5')
+model = load_model('NN_best.h5',custom_objects = {'custom_loss':custom_loss})
 
 label_predict = []
 label_true = []

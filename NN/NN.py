@@ -56,14 +56,14 @@ import keras.backend as K
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import gen_math_ops as math_ops
 
-#def custom_loss(ytrue,ypred):
-#    y_pred1 = ops.convert_to_tensor(ypred[0])
-#    y_pred2 = ops.convert_to_tensor(ypred[1])
+def custom_loss(ytrue,ypred):
+    y_pred1 = ops.convert_to_tensor(ypred[0])
+    y_pred2 = ops.convert_to_tensor(ypred[1])
 
-#    y_true1 = math_ops.cast(ytrue[0], ypred[0].dtype)
-#    y_true2 = math_ops.cast(ytrue[1], ypred[1].dtype)
+    y_true1 = math_ops.cast(ytrue[0], ypred[0].dtype)
+    y_true2 = math_ops.cast(ytrue[1], ypred[1].dtype)
 
-#    return K.mean(math_ops.square(y_pred1 - y_true1), axis=-1)+10.0*K.mean(math_ops.square(y_pred2 - y_true2), axis=-1)
+    return K.mean(math_ops.square(y_pred1 - y_true1), axis=-1)+10.0*K.mean(math_ops.square(y_pred2 - y_true2), axis=-1)
 
 
 best_model = keras.callbacks.ModelCheckpoint('NN_best.h5',
@@ -86,7 +86,7 @@ model = Model(inputs=input_layer,outputs=predictions)
 
 opt = keras.optimizers.RMSprop(decay=1e-5)
 #opt= keras.optimizers.Adam(decay=1e-5,lr=3e-4)
-model.compile(optimizer=opt , loss = 'mse')
+model.compile(optimizer=opt , loss = custom_loss)
 
 history = model.fit(train_features,train_labels,
                     epochs=100,
