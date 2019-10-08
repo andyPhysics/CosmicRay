@@ -25,7 +25,7 @@ def get_data(input_file_list):
         Energy = np.log10(Energy)
         Mass = f['tinyTree']['mass'].array()
         Mass = np.log(Mass)
-        Mass = [1+(3.0/4.0)*i for i in Mass]
+        Mass = [1.0+(3.0/4.0)*i for i in Mass]
         S125 = f['tinyTree']['s125'].array()
         S125 = np.log10(S125)
         Zenith= f['tinyTree']['zenith'].array()
@@ -64,11 +64,11 @@ best_model = keras.callbacks.ModelCheckpoint('NN_best.h5',
 
 input_layer = Input(shape=(5,))
 
-model1 = Dense(10,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(1.0))(input_layer)
+model1 = Dense(20,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(1.0))(input_layer)
 
 model1 = Dropout(rate=0.1)(model1)
 
-model1 = Dense(5,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(1.0))(model1)
+model1 = Dense(10,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(1.0))(model1)
 
 predictions = Dense(2,activation='linear')(model1)
 
