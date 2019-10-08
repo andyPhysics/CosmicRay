@@ -66,6 +66,8 @@ input_layer = Input(shape=(5,))
 
 model1 = Dense(7,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(1.0))(input_layer)
 
+model1 = Dropout(rate=0.8)(model1)
+
 model1 = Dense(4,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(1.0))(model1)
 
 predictions = Dense(2,activation='linear')(model1)
