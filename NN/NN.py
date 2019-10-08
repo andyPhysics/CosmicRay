@@ -23,7 +23,6 @@ def get_data(input_file_list):
         f = uproot.open(path+'/'+i)
         Energy = f['tinyTree']['energy'].array()
         Energy = np.log10(Energy)
-        Energy = [1+(3.0/4.)*i for i in Energy]
         Mass = f['tinyTree']['mass'].array()
         Mass = np.log(Mass)
         Mass = [1+(3.0/4.0)*i for i in Mass]
@@ -67,7 +66,7 @@ input_layer = Input(shape=(5,))
 
 model1 = Dense(7,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(1.0))(input_layer)
 
-model1 = Dropout(rate=0.5)(model1)
+model1 = Dropout(rate=0.1)(model1)
 
 model1 = Dense(4,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(1.0))(model1)
 

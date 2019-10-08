@@ -26,7 +26,6 @@ def get_data(input_file_list):
         Mass = [1+(3.0/4.0)*i for i in Mass]
         Energy = f['tinyTree']['energy'].array()
         Energy = np.log10(Energy)
-        Energy = [1+(3/4)*i for i in Energy]
         S125 = f['tinyTree']['s125'].array()
         S125 = np.log10(S125)
         Zenith= f['tinyTree']['zenith'].array()
