@@ -49,22 +49,12 @@ train_labels,train_features = get_data(train_files)
 test_labels,test_features = get_data(test_files)
 
 import keras
-from keras import initializers
+from keras import initializers,regularizers
 from keras.layers import Dense, Dropout, Flatten, Input, Concatenate
 from keras.models import Model
 import keras.backend as K
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import gen_math_ops as math_ops
-
-def custom_loss(ytrue,ypred):
-    y_pred1 = ops.convert_to_tensor(ypred[0])
-    y_pred2 = ops.convert_to_tensor(ypred[1])
-
-    y_true1 = math_ops.cast(ytrue[0], ypred[0].dtype)
-    y_true2 = math_ops.cast(ytrue[1], ypred[1].dtype)
-
-    return K.mean(math_ops.square(y_pred1 - y_true1), axis=-1)+10.0*K.mean(math_ops.square(y_pred2 - y_true2), axis=-1)
-
 
 best_model = keras.callbacks.ModelCheckpoint('NN_best.h5',
                                              monitor='val_loss',
@@ -74,11 +64,9 @@ best_model = keras.callbacks.ModelCheckpoint('NN_best.h5',
 
 input_layer = Input(shape=(5,))
 
-model1 = Dense(7,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(input_layer)
+model1 = Dense(7,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1),kernel_regularizer=regularizers.l2(0.01))(input_layer)
 
-model1 = Dropout(0.5)(model1)
-
-model1 = Dense(4,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1))(model1)
+model1 = Dense(4,activation='tanh',use_bias=True,bias_initializer=initializers.Constant(0.1),kernel_regularizer=regularizers.l2(0.01))(model1)
 
 predictions = Dense(2,activation='linear')(model1)
 
@@ -86,7 +74,7 @@ model = Model(inputs=input_layer,outputs=predictions)
 
 opt = keras.optimizers.RMSprop(decay=1e-5)
 #opt= keras.optimizers.Adam(decay=1e-5,lr=3e-4)
-model.compile(optimizer=opt , loss = custom_loss)
+model.compile(optimizer=opt , loss = 'mse')
 
 history = model.fit(train_features,train_labels,
                     epochs=100,
