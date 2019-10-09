@@ -11,6 +11,9 @@ verification_files = ["Helium_verify.root","Proton_verify.root","Iron_verify.roo
 
 from sklearn.preprocessing import minmax_scale
 
+model_name = 'Second_model.h5'
+model_training = 'Second_model_training.csv'
+model_best = 'Second_model_best.h5'
 
 #----------------------------------------------------------------------------
 def get_data(input_file_list):
@@ -56,7 +59,7 @@ import keras.backend as K
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import gen_math_ops as math_ops
 
-best_model = keras.callbacks.ModelCheckpoint('NN_best.h5',
+best_model = keras.callbacks.ModelCheckpoint(model_best,
                                              monitor='val_loss',
                                              save_best_only=True,
                                              save_weights_only=False,
@@ -68,9 +71,11 @@ model1 = Dense(7,activation='tanh')(input_layer)
 
 model1 = Dropout(rate=0.1)(model1)
 
-model1 = Dense(4,activation='tanh')(model1)
+model2 = Dense(4,activation='tanh')(model1)
 
-predictions = Dense(2,activation='linear')(model1)
+model3 = Concatenate(axis=-1)([input_layer,model1,model2])
+
+predictions = Dense(2,activation='linear')(model3)
 
 model = Model(inputs=input_layer,outputs=predictions)
 
@@ -83,8 +88,8 @@ history = model.fit(train_features,train_labels,
                     validation_data = (test_features,test_labels),
                     callbacks=[best_model])
 
-model.save('First_model.h5')
+model.save(model_name)
 
 loss = zip(history.history['loss'],history.history['val_loss'])
 
-np.savetxt('First_model.csv',loss,delimiter=',')
+np.savetxt(model_training,loss,delimiter=',')

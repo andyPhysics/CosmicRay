@@ -12,6 +12,10 @@ verification_files = ["Helium_verify.root","Proton_verify.root","Iron_verify.roo
 from sklearn.preprocessing import minmax_scale
 from keras.models import load_model
 
+output_all = 'All_2.npy'
+output_split = 'All_2_split.npy'
+model_used = 'Second_model_best.h5'
+
 #----------------------------------------------------------------------------
 def get_data(input_file_list):
     path = '/data/ana/CosmicRay/IT73-IC79_3ySpectrumAndComposition/simulation/AllSim_merged'
@@ -58,7 +62,7 @@ def get_data(input_file_list):
 
 labels,features = get_data(verification_files)
 
-model = load_model('NN_best.h5')
+model = load_model(model_used)
 
 label_predict = []
 label_true = []
@@ -77,5 +81,5 @@ output = {'true':labels,'pred':output_labels}
 
 labels_dict = {'true':label_true,'pred':label_predict}
 
-np.save('All_output.npy',output)
-np.save('All_split.npy',labels_dict)
+np.save(output_all,output)
+np.save(output_split,labels_dict)
