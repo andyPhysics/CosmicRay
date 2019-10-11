@@ -26,6 +26,19 @@ args = parser.parse_args()
 input_file = args.input_file
 output_name = args.output_name
 
+def get_Xmax(depth,num):
+    max_num = max(num)
+    index = 0
+    for i in num:
+        if i == max_num:
+            break
+        else:
+            i+=1
+    depth_cut = [depth[index-1],depth[index],depth[index+1]]
+    num_cut = [num[index-1],num[index],num[index+1]]
+    x = np.polyfit(depth_cut,num_cut,deg=2)
+    max_value = -x[1]/(2*x[0])
+    return max_value
 
 def read_files(filename_list):
 
@@ -43,7 +56,7 @@ def read_files(filename_list):
         depth = []
         mass = []
         energy = []
-
+        xmax = []
         while event_file.more():
             frame = event_file.pop_physics()
             long_profile = frame['MCPrimaryInfo'].longProfile
@@ -56,14 +69,18 @@ def read_files(filename_list):
                 event_depth.append(i.depth)
             numEMinus.append(event_numEMinus)
             numEPlus.append(event_numEPlus)
+            sum_values = np.array(event_numEMinus)+np.array(event_numEPlus)
+            Xmax = xmax.append(get_Xmax(event_depth,sum_values))
             depth.append(event_depth)
             mass.append(args.mass)
             energy.append(frame['MCPrimary'].energy)
+        print(xmax)
         my_dict = dict(numEMinus=numEMinus,
                        numEPlus=numEPlus,
                        depth=depth,
                        mass=mass,
-                       energy=energy)
+                       energy=energy,
+                       xmax=xmax)
         # close the input file once we are done
         del event_file
     return my_dict
