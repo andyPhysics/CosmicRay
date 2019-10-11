@@ -62,7 +62,8 @@ def read_files(filename_list):
         my_dict = dict(numEMinus=numEMinus,
                        numEPlus=numEPlus,
                        depth=depth,
-                       mass=mass)
+                       mass=mass,
+                       energy=energy)
         # close the input file once we are done
         del event_file
     return my_dict
