@@ -19,6 +19,9 @@ parser.add_argument("-i", "--input",type=str,default='Level5_IC86.2013_genie_num
                     dest="input_file", help="name of the input file")
 parser.add_argument("-n", "--name",type=str,default='Level5_IC86.2013_genie_numu.014640.00000X',
                     dest="output_name",help="name for output file (no path)")
+parser.add_argument("-m","--mass",type=float,default=1.0,
+                    dest="mass",help="This is the mass of the input file events")
+
 args = parser.parse_args()
 input_file = args.input_file
 output_name = args.output_name
@@ -38,6 +41,8 @@ def read_files(filename_list):
         numEMinus = []
         numEPlus = []
         depth = []
+        mass = []
+        energy = []
 
         while event_file.more():
             frame = event_file.pop_physics()
@@ -52,9 +57,12 @@ def read_files(filename_list):
             numEMinus.append(event_numEMinus)
             numEPlus.append(event_numEPlus)
             depth.append(event_depth)
+            mass.append(args.mass)
+            energy.append(frame['MCPrimary'].energy)
         my_dict = dict(numEMinus=numEMinus,
                        numEPlus=numEPlus,
-                       depth=depth)
+                       depth=depth,
+                       mass=mass)
         # close the input file once we are done
         del event_file
     return my_dict
