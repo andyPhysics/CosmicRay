@@ -4,13 +4,14 @@ import numpy as np
 import h5py
 import argparse
 
-from icecube import icetray, dataio, dataclasses, simclasses
+from icecube import icetray, dataio, dataclasses, simclasses, recclasses
+from icecube.recclasses import LaputopParameter as Par
 from I3Tray import I3Units
 
 from collections import OrderedDict
 import itertools
 import random
-
+import datetime
 import sys,os
 
 ## Create ability to change settings from terminal ##
@@ -57,6 +58,40 @@ def read_files(filename_list):
         mass = []
         energy = []
         xmax = []
+        run = []
+        event = []
+        s125 = []
+        beta = []
+        zenith = []
+        azimuth = []
+        x = []
+        y = []
+        z = []
+        eloss_1500 = []
+        eloss_1800 = []
+        eloss_2100 = []
+        eloss_2400 = []
+        stoch_energy = []
+        rel_stoch_energy = []
+        chi2 = []
+        chi2_red = []
+        stoch_depth = []
+        n_he_stoch = []
+        fit_status = []
+        time_start_mjd_sec = []
+        time_start_mjd_ns = []
+        time_start_mjd_day = []
+        eloss_1500_red = []
+        stoch_energy2 = []
+        rel_stoch_energy2 = []
+        chi2_red2 = []
+        stoch_depth2 = []
+        n_he_stoch2 = []
+        fit_status2 = []
+        eloss_1500_red2 = []
+        mc_weight = []
+        nch = []
+        qtot = []
         while event_file.more():
             frame = event_file.pop_physics()
             long_profile = frame['MCPrimaryInfo'].longProfile
@@ -74,6 +109,20 @@ def read_files(filename_list):
             depth.append(event_depth)
             mass.append(args.mass)
             energy.append(frame['MCPrimary'].energy)
+            run.append(frame['I3EventHeader'].run_id)
+            event.append(frame['I3EventHeader'].event_id)
+            s125.append(frame['LaputopSmallParams'].value(Par.Log10_S125))
+            beta.append(frame['LaputopSmallParams'].value(Par.Beta))
+            zenith.append(frame['MCPrimary'].dir.zenith)
+            azimuth.append(frame['MCPrimary'].dir.azimuth)
+            x.append(frame['MCPrimary'].pos.x)
+            y.append(frame['MCPrimary'].pos.y)
+            z.append(frame['MCPrimary'].pos.z)
+            fit_status.append(frame['LaputopSmall'].fit_status)
+            time_start_mjd_sec.append(frame['I3EventHeader'].start_time)
+            print(str(frame['I3EventHeader'].start_time).split()[1].replace(',',''))
+
+#            print(frame['IsSmallShower'].value)
         print(xmax)
         my_dict = dict(numEMinus=numEMinus,
                        numEPlus=numEPlus,
