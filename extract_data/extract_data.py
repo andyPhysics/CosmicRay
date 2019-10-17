@@ -38,15 +38,25 @@ def get_file_list(directories):
 def get_Xmax(depth,num):
     max_num = max(num)
     index = 0
-    for i in num:
-        if i == max_num:
+    depth_cut = []
+    num_cut = []
+    for i,j in zip(depth,num):
+        if j == max_num:
+            depth_cut.append(i)
+            num_cut.append(j)
             break
-        else:
-            i+=1
-    depth_cut = [depth[index-1],depth[index],depth[index+1]]
-    num_cut = [num[index-1],num[index],num[index+1]]
-    x = np.polyfit(depth_cut,num_cut,deg=2)
-    max_value = -x[1]/(2*x[0])
+        index += 1
+    if index == depth.shape[0]-1:
+        max_value = depth[-1]
+    else:
+        num_cut.append(num[index-1])
+        num_cut.append(num[index+1])
+        depth_cut.append(depth[index-1])
+        depth_cut.append(depth[index+1])
+        x = np.polyfit(depth_cut,num_cut,deg=2)
+        if x[0] == 0:
+            print(max_num,num_cut)
+        max_value = -x[1]/(2*x[0])
     return max_value
 
 def read_xmax_from_i3_file(event_file_name):
@@ -204,8 +214,8 @@ def read_root_files(files,input_mass):
                    mc_weight = np.hstack(mc_weight))
     return my_dict
 
-my_files = ['/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/rootfiles/12360/Level3_IC86.2012_12360_Part099.root','/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/rootfiles/12360/Level3_IC86.2012_12360_Part098.root']
-
+my_files = ['/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/rootfiles/12360/Level3_IC86.2012_12360_Part099.root']#,'/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/rootfiles/12360/Level3_IC86.2012_12360_Part098.root']
+#my_files = get_file_list(['/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/rootfiles/12360/'])
 output = read_root_files(my_files,1)
 
 np.save('First.npy',output)
