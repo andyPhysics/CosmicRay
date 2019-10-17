@@ -57,7 +57,7 @@ def get_Xmax(depth,num):
         if x[0] == 0:
             print(max_num,num_cut)
         max_value = -x[1]/(2*x[0])
-    return max_value
+    return depth_cut[0]
 
 def read_xmax_from_i3_file(event_file_name):
     print("reading file: {}".format(event_file_name))
