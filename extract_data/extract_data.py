@@ -28,8 +28,8 @@ args = parser.parse_args()
 input_file = args.input_file
 output_name = args.output_name
 
-def Gaisser_hillas_function(x,m,alpha):
-    n = m*(np.log(x*alpha)-np.log(m))-(x*alpha-m)
+def Gaisser_hillas_function(x,m,alpha,b):
+    n = m*(np.log(x*alpha))-(x*alpha) + b
     return n
 
 def get_file_list(directories):
