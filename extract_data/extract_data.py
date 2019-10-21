@@ -13,6 +13,7 @@ import itertools
 import random
 import datetime
 import sys,os
+from scipy.optimize import curve_fit
 
 ## Create ability to change settings from terminal ##
 parser = argparse.ArgumentParser()
@@ -27,6 +28,10 @@ args = parser.parse_args()
 input_file = args.input_file
 output_name = args.output_name
 
+def Gaisser_hillas_function(x,m,alpha):
+    n = m*(np.log(x*alpha)-np.log(m))-(x*alpha-m)
+    return n
+
 def get_file_list(directories):
     file_list = []
     for i in directories:
@@ -36,28 +41,8 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    max_num = max(num)
-    index = 0
-    depth_cut = []
-    num_cut = []
-    for i,j in zip(depth,num):
-        if j == max_num:
-            depth_cut.append(i)
-            num_cut.append(j)
-            break
-        index += 1
-    if index == depth.shape[0]-1:
-        max_value = depth[-1]
-    else:
-        num_cut.append(num[index-1])
-        num_cut.append(num[index+1])
-        depth_cut.append(depth[index-1])
-        depth_cut.append(depth[index+1])
-        x = np.polyfit(depth_cut,num_cut,deg=2)
-        if x[0] == 0:
-            print(max_num,num_cut)
-        max_value = -x[1]/(2*x[0])
-    return depth_cut[0]
+    popt,pcov = curve_fit(Gaisser_hillas_function,depth,num)
+    return popt
 
 def read_xmax_from_i3_file(event_file_name):
     print("reading file: {}".format(event_file_name))
@@ -94,6 +79,7 @@ def read_root_files(files,input_mass):
     mass = []
     energy = []
     xmax = []
+    lambda_values = []
     s70 = []
     s150 = []
     s125 = []
@@ -141,7 +127,23 @@ def read_root_files(files,input_mass):
         numEPlus = x['MCPrimaryInfo']['longNumEMinus'].array()
         numEMinus = x['MCPrimaryInfo']['longNumEPlus'].array()
         sum_value = np.array(numEPlus)+np.array(numEMinus)
-        xmax += [get_Xmax(i,j) for i,j in zip(depth,sum_value)]
+        sum_value = [i/max(i) for i in sum_value]
+        for i in range(depth.shape[0]):
+#            if i ==0:
+#                print(depth[i],sum_value[i])
+            new_values = zip(depth[i],sum_value[i])
+            new_values2 = []
+            for j in new_values:
+                if j[1] == 0:
+                    continue
+                else:
+                    new_values2.append(j)
+            depth1 = np.array(list(zip(*new_values2))[0])
+            sum_value1 = np.log(list(zip(*new_values2))[1])
+            prediction = get_Xmax(depth1,sum_value1)
+            xmax.append(prediction[0]/prediction[1])
+            lambda_values.append(1/prediction[1])
+
         s70 += [x['LaputopParams']['s70'].array()]
         s150 += [x['LaputopParams']['s150'].array()]
         s125 += [x['LaputopParams']['s125'].array()]
@@ -179,7 +181,9 @@ def read_root_files(files,input_mass):
         #    nch = [] Can't find
         #    qtot = [] Can't find
         count += 1
-                
+
+    print(np.array(xmax))
+    print(np.array(lambda_values))
     my_dict = dict(run = np.hstack(run),
                    event = np.hstack(event),
                    mass = np.hstack(mass),
@@ -214,8 +218,3 @@ def read_root_files(files,input_mass):
                    mc_weight = np.hstack(mc_weight))
     return my_dict
 
-my_files = ['/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/rootfiles/12360/Level3_IC86.2012_12360_Part099.root']#,'/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/rootfiles/12360/Level3_IC86.2012_12360_Part098.root']
-#my_files = get_file_list(['/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/rootfiles/12360/'])
-output = read_root_files(my_files,1)
-
-np.save('First.npy',output)
