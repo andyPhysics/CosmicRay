@@ -81,6 +81,7 @@ def read_root_files(files,input_mass):
     energy = []
     xmax = []
     lambda_values = []
+    X_o = []
     s70 = []
     s150 = []
     s125 = []
@@ -117,7 +118,6 @@ def read_root_files(files,input_mass):
     mc_weight = []
     #    nch = [] Can't find                                                                                                                                                        
     #    qtot = [] Can't find
-    X_o = []
 
     for i in files:
         x = uproot.open(i)
@@ -193,6 +193,8 @@ def read_root_files(files,input_mass):
                    mass = np.hstack(mass),
                    energy = np.hstack(energy),
                    xmax = np.hstack(xmax),
+                   lambda_values = np.hstack(lambda_values),
+                   X_o = np.hstack(X_o),
                    s70 = np.hstack(s70),
                    s150 = np.hstack(s150),
                    s125 = np.hstack(s125),
