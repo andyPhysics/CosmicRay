@@ -14,6 +14,7 @@ import random
 import datetime
 import sys,os
 from scipy.optimize import curve_fit
+from scipy.optimize import brentq
 
 ## Create ability to change settings from terminal ##
 parser = argparse.ArgumentParser()
@@ -41,7 +42,7 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth,num)
+    popt,pcov = curve_fit(Gaisser_hillas_function,depth,num,maxfev=50000)
     return popt
 
 def read_xmax_from_i3_file(event_file_name):
@@ -115,7 +116,8 @@ def read_root_files(files,input_mass):
     #    eloss_1500_red2 = [] Can't find                                                                                                                                            
     mc_weight = []
     #    nch = [] Can't find                                                                                                                                                        
-    #    qtot = [] Can't find  
+    #    qtot = [] Can't find
+    X_o = []
 
     for i in files:
         x = uproot.open(i)
@@ -127,7 +129,7 @@ def read_root_files(files,input_mass):
         numEPlus = x['MCPrimaryInfo']['longNumEMinus'].array()
         numEMinus = x['MCPrimaryInfo']['longNumEPlus'].array()
         sum_value = np.array(numEPlus)+np.array(numEMinus)
-        sum_value = [i/max(i) for i in sum_value]
+#        sum_value = [i/max(i) for i in sum_value]
         for i in range(depth.shape[0]):
 #            if i ==0:
 #                print(depth[i],sum_value[i])
@@ -143,7 +145,10 @@ def read_root_files(files,input_mass):
             prediction = get_Xmax(depth1,sum_value1)
             xmax.append(prediction[0]/prediction[1])
             lambda_values.append(1/prediction[1])
+#            print(prediction)
+            X_o.append(brentq(Gaisser_hillas_function, 1e-100, 1000, args = (prediction[0],prediction[1],prediction[2])))
 
+        print(np.array(xmax+np.array(X_o)))
         s70 += [x['LaputopParams']['s70'].array()]
         s150 += [x['LaputopParams']['s150'].array()]
         s125 += [x['LaputopParams']['s125'].array()]
@@ -182,8 +187,7 @@ def read_root_files(files,input_mass):
         #    qtot = [] Can't find
         count += 1
 
-    print(np.array(xmax))
-    print(np.array(lambda_values))
+
     my_dict = dict(run = np.hstack(run),
                    event = np.hstack(event),
                    mass = np.hstack(mass),
