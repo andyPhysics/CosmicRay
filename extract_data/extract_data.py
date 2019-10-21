@@ -146,7 +146,7 @@ def read_root_files(files,input_mass):
             xmax.append(prediction[0]/prediction[1])
             lambda_values.append(1/prediction[1])
 #            print(prediction)
-            X_o.append(brentq(Gaisser_hillas_function, 1e-100, 1000, args = (prediction[0],prediction[1],prediction[2])))
+            X_o.append(brentq(Gaisser_hillas_function, 1e-100, 500, args = (prediction[0],prediction[1],prediction[2])))
 
         print(np.array(xmax+np.array(X_o)))
         s70 += [x['LaputopParams']['s70'].array()]
