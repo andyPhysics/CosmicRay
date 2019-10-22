@@ -31,7 +31,7 @@ input_file = args.input_file
 output_name = args.output_name
 
 def Gaisser_hillas_function(x,m,alpha,b,a):
-    n = m*np.log(x-a)-alpha*x + b
+    n = m*np.log(alpha*(x-a))-alpha*x + b
     return n
 
 def Gaisser_exp(x,m,alpha,b,a):
@@ -47,7 +47,7 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-2],num[0:len(num)-2],bounds=((-np.inf,-np.inf,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
+    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-2],num[0:len(num)-2],bounds=((-np.inf,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
 #    print(popt,pcov)
     return popt
 
