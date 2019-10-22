@@ -15,7 +15,7 @@ import datetime
 import sys,os
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
-from scipy.optimize import fmin as simplex
+from scipy.optimize import brentq
 
 ## Create ability to change settings from terminal ##
 parser = argparse.ArgumentParser()
@@ -137,7 +137,6 @@ def read_root_files(files,input_mass):
         sum_value = np.array(numEPlus)+np.array(numEMinus)
         depth2.append(depth)
         sum_value2.append(sum_value)
-#        sum_value = [i/max(i) for i in sum_value]
 
         for i in range(depth.shape[0]):
 
@@ -153,7 +152,7 @@ def read_root_files(files,input_mass):
             prediction = get_Xmax(depth1,sum_value1)
             xmax.append(prediction[0]/prediction[1])
             lambda_values.append(1/prediction[1])
-            X_o.append(prediction[2])
+            X_o.append(brentq(Gaisser_exp,-100,100,args=(prediction[0],prediction[1],prediction[2])))
             chi2_xmax.append(chisquare(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2]),f_exp=list(zip(*new_values2))[1],ddof=4)[0])
             sum_value_prediction.append(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2]))
             depth_reduced.append(depth1)
