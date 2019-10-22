@@ -47,9 +47,7 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-#    print(depth)
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-4],ydata=num[0:len(num)-4],bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
-#    print(popt,pcov)
+    popt,pcov = curve_fit(Gaisser_hillas_function,depth,ydata=num,bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
     return popt
 
 def read_xmax_from_i3_file(event_file_name):
@@ -143,6 +141,7 @@ def read_root_files(files,input_mass):
         for i in range(depth.shape[0]):
 
             new_values = zip(depth[i],sum_value[i])
+#            print(list(new_values))
             new_values2 = []
             for j in new_values:
                 if j[1] == 0:
@@ -151,7 +150,7 @@ def read_root_files(files,input_mass):
                     new_values2.append(j)
             depth1 = np.array(list(zip(*new_values2))[0])
             sum_value1 = np.log(list(zip(*new_values2))[1])
-            prediction = get_Xmax(depth1,sum_value1)
+            prediction = get_Xmax(depth1[0:len(depth1)-1],sum_value1[0:len(sum_value1)-1])
             xmax.append(prediction[0]/prediction[1]+prediction[3])
             lambda_values.append(1/prediction[1])
             X_o.append(prediction[3])
