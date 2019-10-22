@@ -150,7 +150,7 @@ def read_root_files(files,input_mass):
             xmax.append(prediction[0]/prediction[1])
             lambda_values.append(1/prediction[1])
             X_o.append(brentq(Gaisser_hillas_function,1e-100, 500, args = (prediction[0],prediction[1],prediction[2])))
-            chi2_xmax.append(chisquare(Gaisser_hillas(depth1,prediction[0],prediction[1],prediction[2]),f_exp=list(zip(*new_values2))[1],ddof=3)[0]/(len(depth1)-3))
+            chi2_xmax.append(chisquare(Gaisser_hillas(depth1,prediction[0],prediction[1],prediction[2]),f_exp=list(zip(*new_values2))[1],ddof=3)[0])
             sum_value_prediction.append(Gaisser_hillas(depth1,prediction[0],prediction[1],prediction[2]))
             depth_reduced.append(depth1)
         
@@ -197,6 +197,8 @@ def read_root_files(files,input_mass):
                    event = np.hstack(event),
                    mass = np.hstack(mass),
                    energy = np.hstack(energy),
+                   depth = np.hstack(depth),
+                   sum_value = np.hstack(sum_value),
                    xmax = np.hstack(xmax),
                    lambda_values = np.hstack(lambda_values),
                    X_o = np.hstack(X_o),
