@@ -31,7 +31,7 @@ input_file = args.input_file
 output_name = args.output_name
 
 def Gaisser_hillas_function(x,m,alpha,b,a):
-    n = m*np.log(alpha*(x-a))-alpha*x + b
+    n = m*np.log(alpha*(x-a))-alpha*(x-a) + b
     return n
 
 def Gaisser_exp(x,m,alpha,b,a):
