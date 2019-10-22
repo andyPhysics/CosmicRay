@@ -47,7 +47,8 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-4],num[0:len(num)-4],bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
+#    print(depth)
+    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-4],ydata=num[0:len(num)-4],bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
 #    print(popt,pcov)
     return popt
 
