@@ -123,8 +123,8 @@ def read_root_files(files,input_mass):
     mc_weight = []
     sum_value_prediction = []
     depth_reduced = []
-    depth1 = []
-    sum_value1 = []
+    depth2 = []
+    sum_value2 = []
     
     for i in files:
         x = uproot.open(i)
@@ -136,8 +136,8 @@ def read_root_files(files,input_mass):
         numEPlus = x['MCPrimaryInfo']['longNumEMinus'].array()
         numEMinus = x['MCPrimaryInfo']['longNumEPlus'].array()
         sum_value = np.array(numEPlus)+np.array(numEMinus)
-        depth1.append(depth)
-        sum_value1.append(sum_value)
+        depth2.append(depth)
+        sum_value2.append(sum_value)
 
         for i in range(depth.shape[0]):
 
@@ -201,8 +201,8 @@ def read_root_files(files,input_mass):
                    event = np.hstack(event),
                    mass = np.hstack(mass),
                    energy = np.hstack(energy),
-                   depth = np.hstack(depth1),
-                   sum_value = np.hstack(sum_value1),
+                   depth = np.hstack(depth2),
+                   sum_value = np.hstack(sum_value2),
                    xmax = np.hstack(xmax),
                    lambda_values = np.hstack(lambda_values),
                    X_o = np.hstack(X_o),
