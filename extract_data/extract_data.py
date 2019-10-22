@@ -136,6 +136,7 @@ def read_root_files(files,input_mass):
         numEPlus = x['MCPrimaryInfo']['longNumEMinus'].array()
         numEMinus = x['MCPrimaryInfo']['longNumEPlus'].array()
         sum_value = np.array(numEPlus)+np.array(numEMinus)
+        sum_value = [i/max(i) for i in sum_value]
         depth2.append(depth)
         sum_value2.append(sum_value)
 
