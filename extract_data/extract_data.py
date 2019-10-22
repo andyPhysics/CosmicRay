@@ -30,12 +30,12 @@ args = parser.parse_args()
 input_file = args.input_file
 output_name = args.output_name
 
-def Gaisser_hillas_function(x,m,alpha,b):
-    n = m*np.log(alpha*x)-alpha*x + b
+def Gaisser_hillas_function(x,m,alpha,b,a):
+    n = m*np.log(alpha*(x-a))-alpha*x + b
     return n
 
-def Gaisser_exp(x,m,alpha,b):
-    n = np.exp(Gaisser_hillas_function(x,m,alpha,b))
+def Gaisser_exp(x,m,alpha,b,a):
+    n = np.exp(Gaisser_hillas_function(x,m,alpha,b,a))
     return n
 
 def get_file_list(directories):
@@ -47,7 +47,7 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-2],num[0:len(num)-2],bounds=((0,0,-np.inf),(np.inf,np.inf,np.inf)))
+    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-2],num[0:len(num)-2],bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
 #    print(popt,pcov)
     return popt
 
@@ -150,11 +150,12 @@ def read_root_files(files,input_mass):
             depth1 = np.array(list(zip(*new_values2))[0])
             sum_value1 = np.log(list(zip(*new_values2))[1])
             prediction = get_Xmax(depth1,sum_value1)
-            xmax.append(prediction[0]/prediction[1])
+            xmax.append(prediction[0]/prediction[1]+prediction[3])
             lambda_values.append(1/prediction[1])
-            X_o.append(brentq(Gaisser_exp,-100,100,args=(prediction[0],prediction[1],prediction[2])))
-            chi2_xmax.append(chisquare(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2]),f_exp=list(zip(*new_values2))[1],ddof=4)[0])
-            sum_value_prediction.append(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2]))
+            X_o.append(prediction[3])
+#            X_o.append(brentq(Gaisser_exp,prediction[3]+1e-100,prediction[0]/prediction[1],args=(prediction[0],prediction[1],prediction[2],prediction[3])))
+            chi2_xmax.append(chisquare(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2],prediction[3]),f_exp=list(zip(*new_values2))[1],ddof=3)[0])
+            sum_value_prediction.append(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2],prediction[3]))
             depth_reduced.append(depth1)
 
 
