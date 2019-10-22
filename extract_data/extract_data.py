@@ -14,8 +14,8 @@ import random
 import datetime
 import sys,os
 from scipy.optimize import curve_fit
-from scipy.optimize import brentq
 from scipy.stats import chisquare
+from scipy.optimize import fmin as simplex
 
 ## Create ability to change settings from terminal ##
 parser = argparse.ArgumentParser()
@@ -47,7 +47,7 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-2],num[0:len(num)-2],bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
+    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-1],num[0:len(num)-1],bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
 #    print(popt,pcov)
     return popt
 
