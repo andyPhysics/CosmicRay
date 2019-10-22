@@ -120,11 +120,10 @@ def read_root_files(files,input_mass):
     stoch_depth2 = []
     n_he_stoch2 = []
     fit_status2 = []
-    #    eloss_1500_red2 = [] Can't find                                                                                                                                            
     mc_weight = []
-    #    nch = [] Can't find                                                                                                                                                        
-    #    qtot = [] Can't find
-
+    sum_value_prediction = []
+    depth_reduced = []
+    
     for i in files:
         x = uproot.open(i)
         run += [x['I3EventHeader']['Run'].array()]
@@ -135,10 +134,9 @@ def read_root_files(files,input_mass):
         numEPlus = x['MCPrimaryInfo']['longNumEMinus'].array()
         numEMinus = x['MCPrimaryInfo']['longNumEPlus'].array()
         sum_value = np.array(numEPlus)+np.array(numEMinus)
-#        sum_value = [i/max(i) for i in sum_value]
+
         for i in range(depth.shape[0]):
-#            if i ==0:
-#                print(depth[i],sum_value[i])
+
             new_values = zip(depth[i],sum_value[i])
             new_values2 = []
             for j in new_values:
@@ -151,9 +149,10 @@ def read_root_files(files,input_mass):
             prediction = get_Xmax(depth1,sum_value1)
             xmax.append(prediction[0]/prediction[1])
             lambda_values.append(1/prediction[1])
-#            print(prediction)
             X_o.append(brentq(Gaisser_hillas_function,1e-100, 500, args = (prediction[0],prediction[1],prediction[2])))
             chi2_xmax.append(chisquare(Gaisser_hillas(depth1,prediction[0],prediction[1],prediction[2]),f_exp=list(zip(*new_values2))[1],ddof=len(depth1)-3)[0])
+            sum_value_prediction.append(Gaisser_hillas(depth1,prediction[0],prediction[1],prediction[2]))
+            depth_reduced.append(depth1)
         
         s70 += [x['LaputopParams']['s70'].array()]
         s150 += [x['LaputopParams']['s150'].array()]
@@ -202,6 +201,8 @@ def read_root_files(files,input_mass):
                    lambda_values = np.hstack(lambda_values),
                    X_o = np.hstack(X_o),
                    chi2_xmax = np.hstack(chi2_xmax),
+                   sum_value_prediction = np.hstack(sum_value_prediction),
+                   depth_reduced = np.hstack(depth_reduced),
                    s70 = np.hstack(s70),
                    s150 = np.hstack(s150),
                    s125 = np.hstack(s125),
