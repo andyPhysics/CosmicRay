@@ -137,7 +137,7 @@ def read_root_files(files,input_mass):
         sum_value = np.array(numEPlus)+np.array(numEMinus)
         depth2.append(depth)
         sum_value2.append(sum_value)
-        sum_value = [i/max(i) for i in sum_value]
+#        sum_value = [i/max(i) for i in sum_value]
 
         for i in range(depth.shape[0]):
 
