@@ -47,7 +47,7 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-2],num[0:len(num)-2],maxfev=50000)
+    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-1],num[0:len(num)-1])
     return popt
 
 def read_xmax_from_i3_file(event_file_name):
