@@ -47,7 +47,7 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-1],num[0:len(num)-1])
+    popt,pcov = curve_fit(Gaisser_hillas,depth[0:len(depth)-2],num[0:len(num)-2],bounds = ((-np.inf,0,-np.inf),(np.inf,np.inf,np.inf)))
     return popt
 
 def read_xmax_from_i3_file(event_file_name):
@@ -97,8 +97,6 @@ def read_root_files(files,input_mass):
     x1 = []
     y = []
     z = []
-    itsiz = []
-    iisiz = []#??? Not sure what this is                                                                                                                                            
     eloss_1500 = []
     eloss_1800 = []
     eloss_2100 = []
@@ -113,10 +111,10 @@ def read_root_files(files,input_mass):
     time_start_mjd_sec = []
     time_start_mjd_ns = []
     time_start_mjd_day = []
-    eloss_1500_red = []
     stoch_energy2 = []
     rel_stoch_energy2 = []
     chi2_red2 = []
+    eloss_1500_red = []
     stoch_depth2 = []
     n_he_stoch2 = []
     fit_status2 = []
@@ -149,15 +147,16 @@ def read_root_files(files,input_mass):
                 else:
                     new_values2.append(j)
             depth1 = np.array(list(zip(*new_values2))[0])
-            sum_value1 = np.log(list(zip(*new_values2))[1])
+            sum_value1 = list(zip(*new_values2))[1]
             prediction = get_Xmax(depth1,sum_value1)
             xmax.append(prediction[0]/prediction[1])
             lambda_values.append(1/prediction[1])
-            X_o.append(brentq(Gaisser_hillas_function,1e-100, 500, args = (prediction[0],prediction[1],prediction[2])))
+#            X_o.append(brentq(Gaisser_hillas,1e-100, 500, args = (prediction[0],prediction[1],prediction[2])))
             chi2_xmax.append(chisquare(Gaisser_hillas(depth1,prediction[0],prediction[1],prediction[2]),f_exp=list(zip(*new_values2))[1],ddof=3)[0])
             sum_value_prediction.append(Gaisser_hillas(depth1,prediction[0],prediction[1],prediction[2]))
             depth_reduced.append(depth1)
-        
+
+
         s70 += [x['LaputopParams']['s70'].array()]
         s150 += [x['LaputopParams']['s150'].array()]
         s125 += [x['LaputopParams']['s125'].array()]
@@ -167,8 +166,6 @@ def read_root_files(files,input_mass):
         x1 += [x['MCPrimary']['x'].array()]
         y += [x['MCPrimary']['y'].array()]
         z += [x['MCPrimary']['z'].array()]
-        itsiz = []#?? Not sure what this is
-        iisiz = []#??? Not sure what this is
         eloss_1500 += [x['Stoch_Reco']['eloss_1500'].array()]
         eloss_1800 += [x['Stoch_Reco']['eloss_1800'].array()]
         eloss_2100 += [x['Stoch_Reco']['eloss_2100'].array()]
@@ -190,11 +187,7 @@ def read_root_files(files,input_mass):
         stoch_depth2 += [x['Stoch_Reco2']['stoch_depth'].array()]
         n_he_stoch2 += [x['Stoch_Reco2']['n_he_stoch'].array()]
         fit_status2 += [x['Stoch_Reco2']['fit_status'].array()]
-        #    eloss_1500_red2 = [] Can't find
         mc_weight += [x['MCPrimaryInfo']['weight'].array()]
-        #    nch = [] Can't find
-        #    qtot = [] Can't find
-        count += 1
 
 
     my_dict = dict(run = np.hstack(run),
@@ -205,7 +198,7 @@ def read_root_files(files,input_mass):
                    sum_value = np.hstack(sum_value2),
                    xmax = np.hstack(xmax),
                    lambda_values = np.hstack(lambda_values),
-                   X_o = np.hstack(X_o),
+ #                  X_o = np.hstack(X_o),
                    chi2_xmax = np.hstack(chi2_xmax),
                    sum_value_prediction = np.array(sum_value_prediction),
                    depth_reduced = np.array(depth_reduced),
