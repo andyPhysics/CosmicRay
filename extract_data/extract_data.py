@@ -15,6 +15,7 @@ import datetime
 import sys,os
 from scipy.optimize import curve_fit
 from scipy.optimize import brentq
+from scipy.stats import chisquare
 
 ## Create ability to change settings from terminal ##
 parser = argparse.ArgumentParser()
@@ -32,6 +33,10 @@ output_name = args.output_name
 def Gaisser_hillas_function(x,m,alpha,b):
     n = m*(np.log(x*alpha))-(x*alpha) + b
     return n
+
+def Gaisser_hillas(x,m,alpha,b):
+    N = np.exp(Gaisser_hillas_function(x,m,alpha,b))
+    return N
 
 def get_file_list(directories):
     file_list = []
@@ -82,6 +87,7 @@ def read_root_files(files,input_mass):
     xmax = []
     lambda_values = []
     X_o = []
+    chi2_xmax = []
     s70 = []
     s150 = []
     s125 = []
@@ -147,8 +153,9 @@ def read_root_files(files,input_mass):
             lambda_values.append(1/prediction[1])
 #            print(prediction)
             X_o.append(brentq(Gaisser_hillas_function,1e-100, 500, args = (prediction[0],prediction[1],prediction[2])))
+            chi2_xmax.append(chisquare(Gaisser_hillas(depth1,prediction[0],prediction[1],prediction[2]),f_exp=list(zip(*new_values2))[1]))
 
-        print(np.array(xmax+np.array(X_o)))
+        
         s70 += [x['LaputopParams']['s70'].array()]
         s150 += [x['LaputopParams']['s150'].array()]
         s125 += [x['LaputopParams']['s125'].array()]
@@ -195,6 +202,7 @@ def read_root_files(files,input_mass):
                    xmax = np.hstack(xmax),
                    lambda_values = np.hstack(lambda_values),
                    X_o = np.hstack(X_o),
+                   chi2_xmax = np.hstack(chi2_xmax),
                    s70 = np.hstack(s70),
                    s150 = np.hstack(s150),
                    s125 = np.hstack(s125),
