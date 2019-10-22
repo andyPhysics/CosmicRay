@@ -150,7 +150,7 @@ def read_root_files(files,input_mass):
                     new_values2.append(j)
             depth1 = np.array(list(zip(*new_values2))[0])
             sum_value1 = np.log(list(zip(*new_values2))[1])
-            prediction = get_Xmax(depth1[0:len(depth1)-1],sum_value1[0:len(sum_value1)-1])
+            prediction = get_Xmax(depth1[0:len(depth1)-2],sum_value1[0:len(sum_value1)-2])
             xmax.append(prediction[0]/prediction[1]+prediction[3])
             lambda_values.append(1/prediction[1])
             X_o.append(prediction[3])
