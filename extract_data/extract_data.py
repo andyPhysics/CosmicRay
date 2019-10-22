@@ -198,7 +198,7 @@ def read_root_files(files,input_mass):
                    sum_value = np.hstack(sum_value2),
                    xmax = np.hstack(xmax),
                    lambda_values = np.hstack(lambda_values),
- #                  X_o = np.hstack(X_o),
+                   X_o = np.hstack(X_o),
                    chi2_xmax = np.hstack(chi2_xmax),
                    sum_value_prediction = np.array(sum_value_prediction),
                    depth_reduced = np.array(depth_reduced),
