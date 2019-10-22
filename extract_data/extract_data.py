@@ -47,7 +47,7 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-2],num[0:len(num)-2],bounds=((-np.inf,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
+    popt,pcov = curve_fit(Gaisser_hillas_function,depth[0:len(depth)-2],num[0:len(num)-2],bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
 #    print(popt,pcov)
     return popt
 
@@ -150,7 +150,7 @@ def read_root_files(files,input_mass):
             depth1 = np.array(list(zip(*new_values2))[0])
             sum_value1 = np.log(list(zip(*new_values2))[1])
             prediction = get_Xmax(depth1,sum_value1)
-            xmax.append(prediction[1]/prediction[2]+prediction[3])
+            xmax.append(prediction[0]/prediction[1]+prediction[3])
             lambda_values.append(1/prediction[1])
             X_o.append(prediction[3])
             chi2_xmax.append(chisquare(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2],prediction[3]),f_exp=list(zip(*new_values2))[1],ddof=4)[0])
