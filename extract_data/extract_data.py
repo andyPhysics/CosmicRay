@@ -153,8 +153,7 @@ def read_root_files(files,input_mass):
             lambda_values.append(1/prediction[1])
 #            print(prediction)
             X_o.append(brentq(Gaisser_hillas_function,1e-100, 500, args = (prediction[0],prediction[1],prediction[2])))
-            chi2_xmax.append(chisquare(Gaisser_hillas(depth1,prediction[0],prediction[1],prediction[2]),f_exp=list(zip(*new_values2))[1]))
-
+            chi2_xmax.append(chisquare(Gaisser_hillas(depth1,prediction[0],prediction[1],prediction[2]),f_exp=list(zip(*new_values2))[1])[0])
         
         s70 += [x['LaputopParams']['s70'].array()]
         s150 += [x['LaputopParams']['s150'].array()]
