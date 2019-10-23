@@ -143,7 +143,7 @@ def read_root_files(files,input_mass):
 #            print(list(new_values))
             new_values2 = []
             for j in new_values:
-                if j[1] == 0:
+                if j[1] < np.exp(-6):
                     continue
                 else:
                     new_values2.append(j)
