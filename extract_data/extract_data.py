@@ -47,7 +47,7 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth,ydata=num,bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
+    popt,pcov = curve_fit(Gaisser_hillas_function,depth,num,bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
     return popt
 
 def read_xmax_from_i3_file(event_file_name):
@@ -134,12 +134,11 @@ def read_root_files(files,input_mass):
         numEPlus = x['MCPrimaryInfo']['longNumEMinus'].array()
         numEMinus = x['MCPrimaryInfo']['longNumEPlus'].array()
         sum_value = np.array(numEPlus)+np.array(numEMinus)
-        sum_value = [i/max(i) for i in sum_value]
         depth2.append(depth)
         sum_value2.append(sum_value)
+        sum_value = [i/max(i) for i in sum_value]
 
         for i in range(depth.shape[0]):
-
             new_values = zip(depth[i],sum_value[i])
 #            print(list(new_values))
             new_values2 = []
@@ -148,9 +147,10 @@ def read_root_files(files,input_mass):
                     continue
                 else:
                     new_values2.append(j)
+            new_values2 = new_values2[0:len(new_values2)-3]
             depth1 = np.array(list(zip(*new_values2))[0])
             sum_value1 = np.log(list(zip(*new_values2))[1])
-            prediction = get_Xmax(depth1[0:len(depth1)-3],sum_value1[0:len(sum_value1)-3])
+            prediction = get_Xmax(depth1,sum_value1)
             xmax.append(prediction[0]/prediction[1]+prediction[3])
             lambda_values.append(1/prediction[1])
             X_o.append(prediction[3])
