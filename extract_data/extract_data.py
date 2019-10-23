@@ -154,7 +154,7 @@ def read_root_files(files,input_mass):
             lambda_values.append(1/prediction[1])
             X_o.append(prediction[3])
   #          X_o.append(brentq(Gaisser_exp,1e-100,prediction[0]/prediction[1]+prediction[3],args=(prediction[0],prediction[1],prediction[2],prediction[3])))
-            chi2_xmax.append(chisquare(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2],prediction[3]),f_exp=list(zip(*new_values2))[1],ddof=3)[0])
+            chi2_xmax.append(chisquare(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2],prediction[3]),f_exp=list(zip(*new_values2))[1],ddof=4)[0])
             sum_value_prediction.append(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2],prediction[3]))
             depth_reduced.append(depth1)
 
