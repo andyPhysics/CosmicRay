@@ -3,7 +3,6 @@
 import numpy as np
 import h5py
 import argparse
-
 from icecube import icetray, dataio, dataclasses, simclasses, recclasses
 from icecube.recclasses import LaputopParameter as Par
 from I3Tray import I3Units
@@ -16,6 +15,7 @@ import sys,os
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
 from scipy.optimize import brentq
+from scipy.signal import find_peaks
 
 ## Create ability to change settings from terminal ##
 parser = argparse.ArgumentParser()
@@ -43,11 +43,11 @@ def get_file_list(directories):
     for i in directories:
         files = os.listdir(i)
         for j in files:
-            file_list.append(i + j)
+            file_list.append([i + j])
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_hillas_function,depth,num,bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))),p0=[1,1,-1,10])
+    popt,pcov = curve_fit(Gaisser_exp,depth,num,bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))),p0=(1,1,-1,10))
     return popt
 
 def read_xmax_from_i3_file(event_file_name):
@@ -137,23 +137,21 @@ def read_root_files(files,input_mass):
         sum_value = [i/max(i) for i in sum_value]
         depth2.append(depth)
         sum_value2.append(sum_value)
-        count = 0
+
         for i in range(depth.shape[0]):
-            count+=1
             new_values = zip(depth[i],sum_value[i])
             new_values2 = []
             for j in new_values:
-                if j[1] < np.exp(-6):
+                if j[1] <= np.exp(-9):
                     continue
                 else:
                     new_values2.append(j)
             depth1 = np.array(list(zip(*new_values2))[0])
-            sum_value1 = np.log(list(zip(*new_values2))[1])
+            sum_value1 = np.array(list(zip(*new_values2))[1])
             prediction = get_Xmax(depth1,sum_value1)
             xmax.append(prediction[0]/prediction[1]+prediction[3])
             lambda_values.append(1/prediction[1])
             X_o.append(prediction[3])
-  #          X_o.append(brentq(Gaisser_exp,1e-100,prediction[0]/prediction[1]+prediction[3],args=(prediction[0],prediction[1],prediction[2],prediction[3])))
             chi2_xmax.append(chisquare(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2],prediction[3]),f_exp=list(zip(*new_values2))[1],ddof=4)[0])
             sum_value_prediction.append(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2],prediction[3]))
             depth_reduced.append(depth1)
