@@ -3,9 +3,6 @@
 import numpy as np
 import h5py
 import argparse
-from icecube import icetray, dataio, dataclasses, simclasses, recclasses
-from icecube.recclasses import LaputopParameter as Par
-from I3Tray import I3Units
 import uproot
 from collections import OrderedDict
 import itertools
@@ -14,8 +11,7 @@ import datetime
 import sys,os
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
-from scipy.optimize import brentq
-from scipy.signal import find_peaks
+
 
 ## Create ability to change settings from terminal ##
 
@@ -36,7 +32,7 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_exp,depth,num,bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))),p0=(1,1,-1,10))
+    popt,pcov = curve_fit(Gaisser_exp,depth,num,bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
     return popt
 
 def read_xmax_from_i3_file(event_file_name):
@@ -115,11 +111,13 @@ def read_root_files(files,input_mass):
     
     for i in files:
         x = uproot.open(i)
+        if len(x.keys()) == 0 :
+            continue
         run += [x['I3EventHeader']['Run'].array()]
         event += [x['I3EventHeader']['Event'].array()]
         mass += [input_mass]*run[count].shape[0]
         energy += [x['MCPrimary']['energy'].array()]
-        depth = x['MCPrimaryInfo']['longDepth'].array()
+        depth = x['MCPrimaryInfo']['longDepth'].array()/1000.0
         numEPlus = x['MCPrimaryInfo']['longNumEMinus'].array()
         numEMinus = x['MCPrimaryInfo']['longNumEPlus'].array()
         sum_value = np.array(numEPlus)+np.array(numEMinus)

@@ -2,9 +2,6 @@
 import numpy as np
 import h5py
 import argparse
-from icecube import icetray, dataio, dataclasses, simclasses, recclasses
-from icecube.recclasses import LaputopParameter as Par
-from I3Tray import I3Units
 import uproot
 from collections import OrderedDict
 import itertools
