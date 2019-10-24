@@ -12,27 +12,29 @@ import random
 import datetime
 import sys,os
 from extract_data import *
+import multiprocessing as mp
 from multiprocessing import Pool
 from functools import partial
 ## Create ability to change settings from terminal ##                                                                                                                                                       
 parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--input",type=str,default='Level5_IC86.2013_genie_numu.014640.00000?.i3.bz2',
-                    dest="input_file", help="name of the input file")
-parser.add_argument("-n", "--name",type=str,default='Level5_IC86.2013_genie_numu.014640.00000X',
+parser.add_argument("-n", "--name",type=str,default='Test.npy',
                     dest="output_name",help="name for output file (no path)")
 parser.add_argument("-m","--mass",type=float,default=1.0,
                     dest="mass",help="This is the mass of the input file events")
+parser.add_argument("-f","--files",type=str,nargs='+',
+                     dest="files",help="This is the list of directories as numbers such as 123456/")
 
 args = parser.parse_args()
 output_name = args.output_name
 
 directory = '/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/rootfiles/'
+output_directories = []
+print(args.files)
+for i in args.files:
+    output_directories.append(directory+i+'/')
 
-my_files = get_file_list([directory+'12360/',directory+'12632/',directory+'12634/',directory+'12636/'])
-#output = read_root_files(my_files,1)
+my_files = get_file_list(output_directories)
 
-p = Pool(5)
-function = partial(read_root_files,input_mass=1)
-output = p.map(function,my_files)
+shared_dict = read_root_files(my_files,args.mass)
 
-np.save(output_name,output)
+np.save(output_name,shared_dict)

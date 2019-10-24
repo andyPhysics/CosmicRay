@@ -18,17 +18,6 @@ from scipy.optimize import brentq
 from scipy.signal import find_peaks
 
 ## Create ability to change settings from terminal ##
-parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--input",type=str,default='Level5_IC86.2013_genie_numu.014640.00000?.i3.bz2',
-                    dest="input_file", help="name of the input file")
-parser.add_argument("-n", "--name",type=str,default='Level5_IC86.2013_genie_numu.014640.00000X',
-                    dest="output_name",help="name for output file (no path)")
-parser.add_argument("-m","--mass",type=float,default=1.0,
-                    dest="mass",help="This is the mass of the input file events")
-
-args = parser.parse_args()
-input_file = args.input_file
-output_name = args.output_name
 
 def Gaisser_hillas_function(x,m,alpha,b,a):
     n = m*np.log(alpha*(x-a))-alpha*x + b
@@ -43,7 +32,7 @@ def get_file_list(directories):
     for i in directories:
         files = os.listdir(i)
         for j in files:
-            file_list.append([i + j])
+            file_list.append(i + j)
     return file_list
 
 def get_Xmax(depth,num):
@@ -135,8 +124,10 @@ def read_root_files(files,input_mass):
         numEMinus = x['MCPrimaryInfo']['longNumEPlus'].array()
         sum_value = np.array(numEPlus)+np.array(numEMinus)
         sum_value = [i/max(i) for i in sum_value]
-        depth2.append(depth)
-        sum_value2.append(sum_value)
+        for i in depth:
+            depth2.append(i)
+        for i in sum_value:
+            sum_value2.append(i)
 
         for i in range(depth.shape[0]):
             new_values = zip(depth[i],sum_value[i])
@@ -194,8 +185,8 @@ def read_root_files(files,input_mass):
                    event = np.hstack(event),
                    mass = np.hstack(mass),
                    energy = np.hstack(energy),
-                   depth = np.hstack(depth2),
-                   sum_value = np.hstack(sum_value2),
+                   depth = np.array(depth2),
+                   sum_value = np.array(sum_value2),
                    xmax = np.hstack(xmax),
                    lambda_values = np.hstack(lambda_values),
                    X_o = np.hstack(X_o),
