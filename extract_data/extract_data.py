@@ -64,15 +64,10 @@ def read_xmax_from_i3_file(event_file_name):
     return zip(xmax,run,event)
 
 def read_root_files(files,input_mass):
-    count = 0
     run = []
     event = []
     mass = []
     energy = []
-    xmax = []
-    lambda_values = []
-    X_o = []
-    chi2_xmax = []
     s70 = []
     s150 = []
     s125 = []
@@ -104,48 +99,29 @@ def read_root_files(files,input_mass):
     n_he_stoch2 = []
     fit_status2 = []
     mc_weight = []
-    sum_value_prediction = []
-    depth_reduced = []
-    depth2 = []
-    sum_value2 = []
-    
+    num_EPlus = []
+    num_EMinus = []
+    num_ETotal = []
+    depth = []
+
     for i in files:
         x = uproot.open(i)
         if len(x.keys()) == 0 :
             continue
+        Stoch_Reco_Found = False
+        for f in x.keys():
+            if f=='Stoch_Reco;1':
+                Stoch_Reco_Found = True
+        if not Stoch_Reco_Found:
+            continue
+        
+        depth += [x['MCPrimaryInfo']['longDepth'].array()]
+        num_EPlus += [x['MCPrimaryInfo']['longNumEMinus'].array()]
+        num_EMinus += [x['MCPrimaryInfo']['longNumEPlus'].array()]
         run += [x['I3EventHeader']['Run'].array()]
         event += [x['I3EventHeader']['Event'].array()]
-        mass += [input_mass]*run[count].shape[0]
+        mass += [input_mass]*len(depth)
         energy += [x['MCPrimary']['energy'].array()]
-        depth = x['MCPrimaryInfo']['longDepth'].array()/1000.0
-        numEPlus = x['MCPrimaryInfo']['longNumEMinus'].array()
-        numEMinus = x['MCPrimaryInfo']['longNumEPlus'].array()
-        sum_value = np.array(numEPlus)+np.array(numEMinus)
-        sum_value = [i/max(i) for i in sum_value]
-        for i in depth:
-            depth2.append(i)
-        for i in sum_value:
-            sum_value2.append(i)
-
-        for i in range(depth.shape[0]):
-            new_values = zip(depth[i],sum_value[i])
-            new_values2 = []
-            for j in new_values:
-                if j[1] <= np.exp(-9):
-                    continue
-                else:
-                    new_values2.append(j)
-            depth1 = np.array(list(zip(*new_values2))[0])
-            sum_value1 = np.array(list(zip(*new_values2))[1])
-            prediction = get_Xmax(depth1,sum_value1)
-            xmax.append(prediction[0]/prediction[1]+prediction[3])
-            lambda_values.append(1/prediction[1])
-            X_o.append(prediction[3])
-            chi2_xmax.append(chisquare(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2],prediction[3]),f_exp=list(zip(*new_values2))[1],ddof=4)[0])
-            sum_value_prediction.append(Gaisser_exp(depth1,prediction[0],prediction[1],prediction[2],prediction[3]))
-            depth_reduced.append(depth1)
-
-
         s70 += [x['LaputopParams']['s70'].array()]
         s150 += [x['LaputopParams']['s150'].array()]
         s125 += [x['LaputopParams']['s125'].array()]
@@ -178,45 +154,39 @@ def read_root_files(files,input_mass):
         fit_status2 += [x['Stoch_Reco2']['fit_status'].array()]
         mc_weight += [x['MCPrimaryInfo']['weight'].array()]
 
-
-    my_dict = dict(run = np.hstack(run),
-                   event = np.hstack(event),
-                   mass = np.hstack(mass),
-                   energy = np.hstack(energy),
-                   depth = np.array(depth2),
-                   sum_value = np.array(sum_value2),
-                   xmax = np.hstack(xmax),
-                   lambda_values = np.hstack(lambda_values),
-                   X_o = np.hstack(X_o),
-                   chi2_xmax = np.hstack(chi2_xmax),
-                   sum_value_prediction = np.array(sum_value_prediction),
-                   depth_reduced = np.array(depth_reduced),
-                   s70 = np.hstack(s70),
-                   s150 = np.hstack(s150),
-                   s125 = np.hstack(s125),
-                   beta = np.hstack(beta),
-                   zenith = np.hstack(zenith),
-                   azimuth = np.hstack(azimuth),
-                   x = np.hstack(x1),
-                   y = np.hstack(y),
-                   z = np.hstack(z),
-                   eloss_1500 = np.hstack(eloss_1500),
-                   eloss_1800 = np.hstack(eloss_1800),
-                   eloss_2100 = np.hstack(eloss_2100),
-                   eloss_2400 = np.hstack(eloss_2400),
-                   stoch_energy = np.hstack(stoch_energy),
-                   rel_stoch_energy = np.hstack(rel_stoch_energy),
-                   chi2 = np.hstack(chi2),
-                   chi2_red = np.hstack(chi2_red),
-                   stoch_depth = np.hstack(stoch_depth),
-                   n_he_stoch = np.hstack(n_he_stoch),
-                   fit_status = np.hstack(fit_status),
-                   stoch_energy2 = np.hstack(stoch_energy2),
-                   rel_stoch_energy2 = np.hstack(rel_stoch_energy2),
-                   chi2_red2 = np.hstack(chi2_red2),
-                   stoch_depth2 = np.hstack(stoch_depth2),
-                   n_he_stoch2 = np.hstack(n_he_stoch2),
-                   fit_status2 = np.hstack(fit_status2),
-                   mc_weight = np.hstack(mc_weight))
+    my_dict = dict(run = run,
+                   event = event,
+                   mass = mass,
+                   num_EPlus = num_EPlus,
+                   num_EMinus = num_EMinus,
+                   depth = depth,
+                   energy = energy,
+                   s70 = s70,
+                   s150 = s150,
+                   s125 = s125,
+                   beta = beta,
+                   zenith = zenith,
+                   azimuth = azimuth,
+                   x = x1,
+                   y = y,
+                   z = z,
+                   eloss_1500 = eloss_1500,
+                   eloss_1800 = eloss_1800,
+                   eloss_2100 = eloss_2100,
+                   eloss_2400 = eloss_2400,
+                   stoch_energy = stoch_energy,
+                   rel_stoch_energy = rel_stoch_energy,
+                   chi2 = chi2,
+                   chi2_red = chi2_red,
+                   stoch_depth = stoch_depth,
+                   n_he_stoch = n_he_stoch,
+                   fit_status = fit_status,
+                   stoch_energy2 = stoch_energy2,
+                   rel_stoch_energy2 = rel_stoch_energy2,
+                   chi2_red2 = chi2_red2,
+                   stoch_depth2 = stoch_depth2,
+                   n_he_stoch2 = n_he_stoch2,
+                   fit_status2 = fit_status2,
+                   mc_weight = mc_weight)
     return my_dict
 
