@@ -32,8 +32,18 @@ def get_file_list(directories):
     return file_list
 
 def get_Xmax(depth,num):
-    popt,pcov = curve_fit(Gaisser_exp,depth,num,bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
-    return popt
+    x = zip(depth,num)
+    output = []
+    for i in x:
+        if i[1] > np.exp(-8):
+            output.append(i)
+        else:
+            continue
+    length = len(output)
+    depth_new = np.array(list(zip(*output))[0][0:length-3])
+    num_new = np.array(list(zip(*output))[1][0:length-3])
+    popt,pcov = curve_fit(Gaisser_exp,depth_new,num_new,bounds=((0,0,-np.inf,-np.inf),(np.inf,np.inf,np.inf,min(depth))))
+    return popt,depth_new,num_new
 
 def read_xmax_from_i3_file(event_file_name):
     print("reading file: {}".format(event_file_name))
