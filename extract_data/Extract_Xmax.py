@@ -7,15 +7,14 @@ from scipy.stats import chisquare
 import sys,os
 import uproot
 
-directory_number = '12360'
-file_name = '/data/user/amedina/CosmicRay/Curvature/%s/Subsets_0.root'%(directory_number)
-loaded_dict = uproot.open(file_name)
+file_name = '/data/user/amedina/CosmicRay/All_updated/Proton_all.npy'
+load_dict = np.load(file_name,allow_pickle=True).item()
 base = os.path.basename(file_name)
-file_name = base.split('.')[0]
-output_name = '/data/user/amedina/CosmicRay/All_updated/%s/'%(directory_number)+file_name+'.npy'
+file_name_base = base.split('.')[0]
+output_name = '/data/user/amedina/CosmicRay/All_updated/'+file_name_base+'_Xmax.npy'
 
 def concat_values(file_name,dict_key):
-    x = uproot.open(file_name)
+    x = np.load(file_name,allow_pickle=True).item()
     value = x[dict_key]      
     value_all = []
     for i in value:
@@ -30,7 +29,7 @@ event = concat_values(file_name,'event')
 E_plus_all = concat_values(file_name,'num_EPlus')
 E_minus_all = concat_values(file_name,'num_EMinus')
 E_all = [i+j for i,j in zip(E_plus_all,E_minus_all)]
-E_all = [i/max(i) for i in E_all]
+E_all = [i/float(max(i)) for i in E_all]
 X_max = []
 X_o = []
 lambda_value = []
@@ -42,20 +41,28 @@ values = zip(run,event,depth,E_all)
 count = 0
 for i in values:
     print(count)
-    
+    fit = True
     try:
         output,depth_new,E_all_new = get_Xmax(i[2],i[3])
     except:
-        continue
-    
-    chi2_xmax.append(chisquare(E_all_new,Gaisser_exp(depth_new,output[0],output[1],output[2],output[3]))[0])
-    run_new.append(run[count])
-    event_new.append(event[count])
-    X_max.append(output[0]/output[1] + output[3])
-    X_o.append(output[3])
-    lambda_value.append(1/output[1])
-    count+=1
-    
+        fit = False
+        count+=1
+    if fit:
+        chi2_xmax.append(chisquare(E_all_new,Gaisser_exp(depth_new,output[0],output[1],output[2],output[3]))[0])
+        run_new.append(run[count])
+        event_new.append(event[count])
+        X_max.append(output[0]/output[1] + output[3])
+        X_o.append(output[3])
+        lambda_value.append(1/output[1])
+        count+=1
+    else:
+        chi2_xmax.append(None)
+        run_new.append(run[count])
+        event_new.append(event[count])
+        X_max.append(None)
+        X_o.append(None)
+        lambda_value.append(None)
+
 new_dict = dict(run = run_new,
                 event = event_new,
                 X_max = X_max,

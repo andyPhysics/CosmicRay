@@ -24,13 +24,13 @@ parser.add_argument("-f","--files",type=str,nargs='+',
 args = parser.parse_args()
 output_name = args.output_name
 
-#directory = '/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/rootfiles/'
+directory = '/data/user/amedina/CosmicRay/Curvature/'
 output_directories = []
 print(args.files)
 for i in args.files:
     output_directories.append(directory+i+'/')
 
-my_files = get_file_list(output_directories)
+my_files = get_root_files(output_directories)
 
 shared_dict = read_root_files(my_files,args.mass)
 

@@ -8,12 +8,10 @@ from collections import OrderedDict
 import itertools
 import random
 import datetime
-import sys,os
+import sys,os,fnmatch
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
 
-
-## Create ability to change settings from terminal ##
 
 def Gaisser_hillas_function(x,m,alpha,b,a):
     n = m*np.log(alpha*(x-a))-alpha*x + b
@@ -23,10 +21,10 @@ def Gaisser_exp(x,m,alpha,b,a):
     n = np.exp(Gaisser_hillas_function(x,m,alpha,b,a))
     return n
 
-def get_file_list(directories):
+def get_root_files(directories):
     file_list = []
     for i in directories:
-        files = os.listdir(i)
+        files = fnmatch.filter(os.listdir(i),'*.root')
         for j in files:
             file_list.append(i + j)
     return file_list
@@ -162,7 +160,7 @@ def read_root_files(files,input_mass):
         A += [x['CurvatureOnlyParams']['A'].array()]
         D += [x['CurvatureOnlyParams']['D'].array()]
         N += [x['CurvatureOnlyParams']['N'].array()]
-        chi2_curavture += [x['CurvatureOnlyParams']['chi2'].array()]
+        chi2_curvature += [x['CurvatureOnlyParams']['chi2'].array()]
         
     my_dict = dict(run = run,
                    event = event,
