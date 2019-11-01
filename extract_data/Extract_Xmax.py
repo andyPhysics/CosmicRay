@@ -1,15 +1,21 @@
 import numpy as np
 from extract_data import *
 import time
-import matplotlib.pylab as plt
 import multiprocessing as mp
+import uproot
 from scipy.stats import chisquare
+import sys,os
+import uproot
 
-file_name = '/home/andy/Iron_all.npy'
-loaded_dict = np.load(file_name,allow_pickle=True,encoding='latin1').item()
+directory_number = '12360'
+file_name = '/data/user/amedina/CosmicRay/Curvature/%s/Subsets_0.root'%(directory_number)
+loaded_dict = uproot.open(file_name)
+base = os.path.basename(file_name)
+file_name = base.split('.')[0]
+output_name = '/data/user/amedina/CosmicRay/All_updated/%s/'%(directory_number)+file_name+'.npy'
 
 def concat_values(file_name,dict_key):
-    x = np.load(file_name,allow_pickle=True,encoding='latin1').item()
+    x = uproot.open(file_name)
     value = x[dict_key]      
     value_all = []
     for i in value:
@@ -59,6 +65,5 @@ new_dict = dict(run = run_new,
 
 loaded_dict.update({'Gaisser_values':new_dict})
 np.save('Iron_updated.npy',loaded_dict)
-
 
 

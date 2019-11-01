@@ -98,13 +98,9 @@ def read_root_files(files,input_mass):
     stoch_depth = []
     n_he_stoch = []
     fit_status = []
-    time_start_mjd_sec = []
-    time_start_mjd_ns = []
-    time_start_mjd_day = []
     stoch_energy2 = []
     rel_stoch_energy2 = []
     chi2_red2 = []
-    eloss_1500_red = []
     stoch_depth2 = []
     n_he_stoch2 = []
     fit_status2 = []
@@ -113,6 +109,10 @@ def read_root_files(files,input_mass):
     num_EMinus = []
     num_ETotal = []
     depth = []
+    A = []
+    D = []
+    N = []
+    chi2_curvature = []
 
     for i in files:
         x = uproot.open(i)
@@ -152,10 +152,6 @@ def read_root_files(files,input_mass):
         stoch_depth += [x['Stoch_Reco']['stoch_depth'].array()]
         n_he_stoch += [x['Stoch_Reco']['n_he_stoch'].array()]
         fit_status += [x['Stoch_Reco']['fit_status'].array()]
-        time_start_mjd_sec = []
-        time_start_mjd_ns = []
-        time_start_mjd_day = []
-        eloss_1500_red = []
         stoch_energy2 += [x['Stoch_Reco2']['stoch_energy'].array()]
         rel_stoch_energy2 += [x['Stoch_Reco2']['rel_stoch_energy'].array()]
         chi2_red2 += [x['Stoch_Reco2']['chi2_red'].array()]
@@ -163,7 +159,11 @@ def read_root_files(files,input_mass):
         n_he_stoch2 += [x['Stoch_Reco2']['n_he_stoch'].array()]
         fit_status2 += [x['Stoch_Reco2']['fit_status'].array()]
         mc_weight += [x['MCPrimaryInfo']['weight'].array()]
-
+        A += [x['CurvatureOnlyParams']['A'].array()]
+        D += [x['CurvatureOnlyParams']['D'].array()]
+        N += [x['CurvatureOnlyParams']['N'].array()]
+        chi2_curavture += [x['CurvatureOnlyParams']['chi2'].array()]
+        
     my_dict = dict(run = run,
                    event = event,
                    mass = mass,
@@ -197,6 +197,10 @@ def read_root_files(files,input_mass):
                    stoch_depth2 = stoch_depth2,
                    n_he_stoch2 = n_he_stoch2,
                    fit_status2 = fit_status2,
-                   mc_weight = mc_weight)
+                   mc_weight = mc_weight,
+                   A = A,
+                   D = D,
+                   N = N,
+                   chi2_curvature = chi2_curvature)
     return my_dict
 
