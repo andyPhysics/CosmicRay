@@ -160,7 +160,7 @@ def read_root_files(files,input_mass):
         A += [x['CurvatureOnlyParams']['A'].array()]
         D += [x['CurvatureOnlyParams']['D'].array()]
         N += [x['CurvatureOnlyParams']['N'].array()]
-        chi2_curvature += [x['CurvatureOnlyParams']['chi2'].array()]
+        chi2_curvature += [x['CurvatureOnlyParams']['chi2_time'].array()]
         
     my_dict = dict(run = run,
                    event = event,

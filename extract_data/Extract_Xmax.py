@@ -1,3 +1,5 @@
+#!/usr/bin/env python 
+
 import numpy as np
 from extract_data import *
 import time
@@ -6,12 +8,20 @@ import uproot
 from scipy.stats import chisquare
 import sys,os
 import uproot
+import argparse
 
-file_name = '/data/user/amedina/CosmicRay/All_updated/Proton_all.npy'
-load_dict = np.load(file_name,allow_pickle=True).item()
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-n", "--name",type=str,default='/data/user/amedina/CosmicRay/All_updated/Proton_all.npy',
+                    dest="input_file",help="name of the input file")
+args = parser.parse_args()
+
+
+file_name = args.input_file
+loaded_dict = np.load(file_name,allow_pickle=True).item()
 base = os.path.basename(file_name)
 file_name_base = base.split('.')[0]
-output_name = '/data/user/amedina/CosmicRay/All_updated/'+file_name_base+'_Xmax.npy'
+output_name = file_name_base+'_Xmax.npy'
 
 def concat_values(file_name,dict_key):
     x = np.load(file_name,allow_pickle=True).item()
@@ -63,14 +73,14 @@ for i in values:
         X_o.append(None)
         lambda_value.append(None)
 
-new_dict = dict(run = run_new,
-                event = event_new,
-                X_max = X_max,
-                X_o = X_o,
-                lambda_value = lambda_value,
-                chi2_xmax = chi2_xmax)
+new_dict = dict(run = np.hstack(run_new),
+                event = np.hstack(event_new),
+                X_max = np.hstack(X_max),
+                X_o = np.hstack(X_o),
+                lambda_value = np.hstack(lambda_value),
+                chi2_xmax = np.hstack(chi2_xmax))
 
 loaded_dict.update({'Gaisser_values':new_dict})
-np.save('Iron_updated.npy',loaded_dict)
+np.save(output_name,loaded_dict)
 
 
