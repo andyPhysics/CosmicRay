@@ -111,6 +111,8 @@ def read_root_files(files,input_mass):
     D = []
     N = []
     chi2_curvature = []
+    InIce_cuts = []
+    IceTop_cuts = []
 
     for i in files:
         x = uproot.open(i)
@@ -162,6 +164,9 @@ def read_root_files(files,input_mass):
         N += [x['CurvatureOnlyParams']['N'].array()]
         chi2_curvature += [x['CurvatureOnlyParams']['chi2_time'].array()]
         
+        InIce_cuts.append(x['IT73AnalysisInIceQualityCuts'].arrays())
+        IceTop_cuts.append(x['IT73AnalysisIceTopQualityCuts'].arrays())
+
     my_dict = dict(run = run,
                    event = event,
                    mass = mass,
@@ -200,5 +205,5 @@ def read_root_files(files,input_mass):
                    D = D,
                    N = N,
                    chi2_curvature = chi2_curvature)
-    return my_dict
+    return my_dict,InIce_cuts,IceTop_cuts
 
