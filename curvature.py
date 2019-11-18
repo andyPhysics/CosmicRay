@@ -6,7 +6,7 @@ import sys,getopt
 from os.path import expandvars
 
 from I3Tray import *
-from icecube import icetray, dataclasses, dataio, toprec, recclasses, frame_object_diff
+from icecube import icetray, dataclasses, dataio, toprec, recclasses, frame_object_diff,simclasses
 from icecube import gulliver, gulliver_modules, lilliput,photonics_service
 load('millipede')
 load('stochastics')
@@ -43,16 +43,16 @@ data_set_number = args.directory_number
 directory = '/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/'
 file_list = os.listdir(directory+data_set_number)
 file_list_all = np.array([directory+data_set_number+'/'+i for i in file_list])
-file_list_all = np.array_split(file_list_all,200)
-
+file_list_all = np.array(np.array_split(file_list_all,200))
 #### PUT YOUR FAVORITE GCD AND INPUT FILE HERE
 # This particular example file lives in Madison.
 GCDfile = '/data/sim/IceTop/2012/filtered/CORSIKA-ice-top/%s/level2/0000000-0000999/GeoCalibDetectorStatus_2012.56063_V1_OctSnow.i3.gz'%(data_set_number)
-x_list = list(range(len(file_list_all)))
+x_list = list(range(file_list_all.shape[0]))
 x_list = np.array(x_list)
 def output_i3_root(i):
     infile = file_list_all[i]
     infile = [str(j) for j in infile]
+    print(infile,i)
 
     #### NAME YOUR OUTPUT FILES HERE
     # Put this someplace that exists!  (This particular one is for KR)
@@ -76,7 +76,7 @@ def output_i3_root(i):
     tray.AddService("I3GulliverMinuitFactory","Minuit")(
         ("MinuitPrintLevel",-2),  
         ("FlatnessCheck",True),  
-        ("Algorithm","SIMPLEX"),  
+        ("Algorithm","MIGRAD"),  
         ("MaxIterations",1000),
         ("MinuitStrategy",2),
         ("Tolerance",0.01),    
@@ -84,18 +84,21 @@ def output_i3_root(i):
 
     tray.AddService("I3CurvatureSeedServiceFactory","CurvSeed")(
         ("SeedTrackName", "Laputop"), # This is also the default
-        ("A", 4.823e-4),            # This comes from the original IT-26 gausspar function 
-        ("N",19.41),
-        ("D",118.1)
+        ("A", 7e-4),            # This comes from the original IT-26 gausspar function 
+        ("N",9.0),
+        ("D",10.0)
     )
 
     tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam")(
         ("FreeA", True),       # Yeah, fit this one!
         ("MinA", 1.0e-4),      # This is also the default
         ("MaxA", 1.0e-3),      # This is also the default
-        ("StepsizeA", 5.0e-6),  # This is also the default
+        ("StepsizeA", 2e-4),
         ("FreeN",True),
-        ("FreeD",True)
+        ("StepsizeD",2),
+        ("MinD",1e-1),
+        ("FreeD",True),
+        ("StepsizeN",2e-1)
     )
 
     tray.AddService("I3LaputopLikelihoodServiceFactory","ToprecLike2")(
@@ -154,7 +157,9 @@ def output_i3_root(i):
                   "Stoch_Reco2",
                   "I3EventHeader",
                   "MCPrimary",
-                  "MCPrimaryInfo"]),
+                  "MCPrimaryInfo",
+                  "IT73AnalysisIceTopQualityCuts",
+                  "IT73AnalysisInIceQualityCuts"]),
         ("subeventstreams",["ice_top"])
     )
 

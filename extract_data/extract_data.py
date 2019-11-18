@@ -95,13 +95,13 @@ def read_root_files(files,input_mass):
     chi2_red = []
     stoch_depth = []
     n_he_stoch = []
-    fit_status = []
+    fit_status_stoch_reco = []
     stoch_energy2 = []
     rel_stoch_energy2 = []
     chi2_red2 = []
     stoch_depth2 = []
     n_he_stoch2 = []
-    fit_status2 = []
+    fit_status_stoch_reco2 = []
     mc_weight = []
     num_EPlus = []
     num_EMinus = []
@@ -111,6 +111,7 @@ def read_root_files(files,input_mass):
     D = []
     N = []
     chi2_curvature = []
+    fit_status_curvature = []
     InIce_cuts = []
     IceTop_cuts = []
 
@@ -151,18 +152,19 @@ def read_root_files(files,input_mass):
         chi2_red += [x['Stoch_Reco']['chi2_red'].array()]
         stoch_depth += [x['Stoch_Reco']['stoch_depth'].array()]
         n_he_stoch += [x['Stoch_Reco']['n_he_stoch'].array()]
-        fit_status += [x['Stoch_Reco']['fit_status'].array()]
+        fit_status_stoch_reco += [x['Stoch_Reco']['fit_status'].array()]
         stoch_energy2 += [x['Stoch_Reco2']['stoch_energy'].array()]
         rel_stoch_energy2 += [x['Stoch_Reco2']['rel_stoch_energy'].array()]
         chi2_red2 += [x['Stoch_Reco2']['chi2_red'].array()]
         stoch_depth2 += [x['Stoch_Reco2']['stoch_depth'].array()]
         n_he_stoch2 += [x['Stoch_Reco2']['n_he_stoch'].array()]
-        fit_status2 += [x['Stoch_Reco2']['fit_status'].array()]
+        fit_status_stoch_reco2 += [x['Stoch_Reco2']['fit_status'].array()]
         mc_weight += [x['MCPrimaryInfo']['weight'].array()]
         A += [x['CurvatureOnlyParams']['A'].array()]
         D += [x['CurvatureOnlyParams']['D'].array()]
         N += [x['CurvatureOnlyParams']['N'].array()]
         chi2_curvature += [x['CurvatureOnlyParams']['chi2_time'].array()]
+        fit_status_curvature += [x['CurvatureOnly']['fit_status'].array()]
         
         InIce_cuts.append(x['IT73AnalysisInIceQualityCuts'].arrays())
         IceTop_cuts.append(x['IT73AnalysisIceTopQualityCuts'].arrays())
@@ -193,17 +195,18 @@ def read_root_files(files,input_mass):
                    chi2_red = chi2_red,
                    stoch_depth = stoch_depth,
                    n_he_stoch = n_he_stoch,
-                   fit_status = fit_status,
+                   fit_status_stoch_reco = fit_status_stoch_reco,
                    stoch_energy2 = stoch_energy2,
                    rel_stoch_energy2 = rel_stoch_energy2,
                    chi2_red2 = chi2_red2,
                    stoch_depth2 = stoch_depth2,
                    n_he_stoch2 = n_he_stoch2,
-                   fit_status2 = fit_status2,
+                   fit_status_stoch_reco2 = fit_status_stoch_reco2,
                    mc_weight = mc_weight,
                    A = A,
                    D = D,
                    N = N,
-                   chi2_curvature = chi2_curvature)
+                   chi2_curvature = chi2_curvature,
+                   fit_status_curvature = fit_status_curvature)
     return my_dict,InIce_cuts,IceTop_cuts
 

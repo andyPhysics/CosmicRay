@@ -21,7 +21,7 @@ file_name = args.input_file
 loaded_dict = np.load(file_name,allow_pickle=True).item()
 base = os.path.basename(file_name)
 file_name_base = base.split('.')[0]
-output_name = file_name_base+'_Xmax.npy'
+output_name = '/data/user/amedina/CosmicRay/All_updated/'+file_name_base+'_Xmax.npz'
 
 def concat_values(file_name,dict_key):
     x = np.load(file_name,allow_pickle=True).item()
@@ -58,7 +58,7 @@ for i in values:
         fit = False
         count+=1
     if fit:
-        chi2_xmax.append(chisquare(E_all_new,Gaisser_exp(depth_new,output[0],output[1],output[2],output[3]))[0])
+        chi2_xmax.append(chisquare(E_all_new,Gaisser_exp(depth_new,output[0],output[1],output[2],output[3]),ddof=3)[0])
         run_new.append(run[count])
         event_new.append(event[count])
         X_max.append(output[0]/output[1] + output[3])
@@ -81,6 +81,6 @@ new_dict = dict(run = np.hstack(run_new),
                 chi2_xmax = np.hstack(chi2_xmax))
 
 loaded_dict.update({'Gaisser_values':new_dict})
-np.save(output_name,loaded_dict)
+np.savez(output_name,loaded_dict)
 
 
