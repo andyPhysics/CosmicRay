@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/amedina/build_stable/bin/python
 import argparse
 import os
 import sys,getopt
@@ -44,6 +44,7 @@ directory = '/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/'
 file_list = os.listdir(directory+data_set_number)
 file_list_all = np.array([directory+data_set_number+'/'+i for i in file_list])
 file_list_all = np.array(np.array_split(file_list_all,200))
+print(file_list_all)
 #### PUT YOUR FAVORITE GCD AND INPUT FILE HERE
 # This particular example file lives in Madison.
 GCDfile = '/data/sim/IceTop/2012/filtered/CORSIKA-ice-top/%s/level2/0000000-0000999/GeoCalibDetectorStatus_2012.56063_V1_OctSnow.i3.gz'%(data_set_number)
@@ -69,7 +70,7 @@ def output_i3_root(i):
 
     ## The "simple lambda" snowservice
     #tray.AddService("I3SimpleSnowCorrectionServiceFactory","SimpleSnow21")(
-    #    ("Lambda", 2.1)
+   #    ("Lambda", 2.1)
     #    )
 
     ## This one is the standard one.
@@ -77,29 +78,39 @@ def output_i3_root(i):
         ("MinuitPrintLevel",-2),  
         ("FlatnessCheck",True),  
         ("Algorithm","MIGRAD"),  
-        ("MaxIterations",1000),
+        ("MaxIterations",50000),
         ("MinuitStrategy",2),
-        ("Tolerance",0.01),    
+        ("Tolerance",0.1),    
     )
 
     tray.AddService("I3CurvatureSeedServiceFactory","CurvSeed")(
         ("SeedTrackName", "Laputop"), # This is also the default
-        ("A", 7e-4),            # This comes from the original IT-26 gausspar function 
-        ("N",9.0),
-        ("D",10.0)
+        ("A", 6e-4),            # This comes from the original IT-26 gausspar function 
+        ("N",9.9832),
+        ("D",63.5775)
     )
 
     tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam")(
-        ("FreeA", True),       # Yeah, fit this one!
-        ("MinA", 1.0e-4),      # This is also the default
-        ("MaxA", 1.0e-3),      # This is also the default
-        ("StepsizeA", 2e-4),
-        ("FreeN",True),
-        ("StepsizeD",2),
-        ("MinD",1e-1),
-        ("FreeD",True),
-        ("StepsizeN",2e-1)
+        ("FreeA", True),
+        ("MinA", 0.0),
+        ("MaxA", 2e-3),
+        ("StepsizeA", 1e-5)
     )
+
+    tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam2")(
+        ("FreeN",True),
+        ("MinN",0),
+        ("MaxN",200.0),
+        ("StepsizeN",0.2)
+    )
+
+    tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam3")(
+        ("FreeD",True),
+        ("MinD",0),
+        ("MaxD",500.0),
+        ("StepsizeD",0.2)
+    )
+
 
     tray.AddService("I3LaputopLikelihoodServiceFactory","ToprecLike2")(
         ("datareadout", datareadoutName),
@@ -125,13 +136,15 @@ def output_i3_root(i):
 
     tray.AddModule("I3LaputopFitter","CurvatureOnly")(
         ("SeedService","CurvSeed"),
-        ("NSteps",1),                    # <--- tells it how many services to look for and perform
-        ("Parametrization1","CurvParam"),  
+        ("NSteps",3),                    # <--- tells it how many services to look for and perform
+        ("Parametrization1","CurvParam"),
+        ("Parametrization2","CurvParam2"),
+        ("Parametrization3","CurvParam3"),
         ("StoragePolicy","OnlyBestFit"),
         ("Minimizer","Minuit"),
         ("LogLikelihoodService","ToprecLike2"),     # the three likelihoods
-        ("LDFFunctions",[""]),   # do NOT do the LDF (charge) likelihood
-        ("CurvFunctions",["gaussparfree"]) # yes, do the CURVATURE likelihood
+        ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood
+        ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood
     )
 
 #    tray.AddModule("Dump","dump")()
