@@ -107,6 +107,10 @@ def read_root_files(files,input_mass):
     num_EMinus = []
     num_ETotal = []
     depth = []
+    ghMaxNum = []
+    ghStartDepth = []
+    ghRedChiSqr = []
+    ghMaxDepth = []
     A = []
     D = []
     N = []
@@ -114,14 +118,13 @@ def read_root_files(files,input_mass):
     fit_status_curvature = []
     InIce_cuts = []
     IceTop_cuts = []
-
     for i in files:
         x = uproot.open(i)
         if len(x.keys()) == 0 :
             continue
         Stoch_Reco_Found = False
         for f in x.keys():
-            if f=='Stoch_Reco;1':
+            if f==b'Stoch_Reco;1':
                 Stoch_Reco_Found = True
         if not Stoch_Reco_Found:
             continue
@@ -129,6 +132,10 @@ def read_root_files(files,input_mass):
         depth += [x['MCPrimaryInfo']['longDepth'].array()]
         num_EPlus += [x['MCPrimaryInfo']['longNumEMinus'].array()]
         num_EMinus += [x['MCPrimaryInfo']['longNumEPlus'].array()]
+        ghMaxNum += [x['MCPrimaryInfo']['ghMaxNum'].array()]
+        ghStartDepth += [x['MCPrimaryInfo']['ghStartDepth'].array()]
+        ghMaxDepth += [x['MCPrimaryInfo']['ghMaxDepth'].array()]
+        ghRedChiSqr += [x['MCPrimaryInfo']['ghRedChiSqr'].array()]
         run += [x['I3EventHeader']['Run'].array()]
         event += [x['I3EventHeader']['Event'].array()]
         mass += [input_mass]*len(depth)
@@ -165,16 +172,18 @@ def read_root_files(files,input_mass):
         N += [x['CurvatureOnlyParams']['N'].array()]
         chi2_curvature += [x['CurvatureOnlyParams']['chi2_time'].array()]
         fit_status_curvature += [x['CurvatureOnly']['fit_status'].array()]
-        
         InIce_cuts.append(x['IT73AnalysisInIceQualityCuts'].arrays())
         IceTop_cuts.append(x['IT73AnalysisIceTopQualityCuts'].arrays())
-
     my_dict = dict(run = run,
                    event = event,
                    mass = mass,
                    num_EPlus = num_EPlus,
                    num_EMinus = num_EMinus,
                    depth = depth,
+                   ghMaxNum = ghMaxNum,
+                   ghStartDepth = ghStartDepth,
+                   ghMaxDepth = ghMaxDepth,
+                   ghRedChiSqr = ghRedChiSqr,
                    energy = energy,
                    s70 = s70,
                    s150 = s150,
@@ -208,5 +217,6 @@ def read_root_files(files,input_mass):
                    N = N,
                    chi2_curvature = chi2_curvature,
                    fit_status_curvature = fit_status_curvature)
+    
     return my_dict,InIce_cuts,IceTop_cuts
 

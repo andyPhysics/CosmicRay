@@ -18,13 +18,13 @@ args = parser.parse_args()
 
 
 file_name = args.input_file
-loaded_dict = np.load(file_name,allow_pickle=True).item()
+loaded_dict = np.load(file_name,allow_pickle=True,encoding='latin1').item()
 base = os.path.basename(file_name)
 file_name_base = base.split('.')[0]
 output_name = '/data/user/amedina/CosmicRay/All_updated/'+file_name_base+'_Xmax.npz'
 
 def concat_values(file_name,dict_key):
-    x = np.load(file_name,allow_pickle=True).item()
+    x = np.load(file_name,allow_pickle=True,encoding='latin1').item()
     value = x[dict_key]      
     value_all = []
     for i in value:

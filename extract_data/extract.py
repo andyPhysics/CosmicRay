@@ -42,6 +42,7 @@ my_files = get_root_files(output_directories)
 
 shared_dict,InIce_cuts,IceTop_cuts = read_root_files(my_files,args.mass)
 
+
 First_dict = InIce_cuts[0]
 for i in InIce_cuts[1:]:
     First_dict = mergeDict(First_dict,i)
