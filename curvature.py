@@ -6,8 +6,9 @@ import sys,getopt
 from os.path import expandvars
 
 from I3Tray import *
-from icecube import icetray, dataclasses, dataio, toprec, recclasses, frame_object_diff,simclasses
-from icecube import gulliver, gulliver_modules, lilliput,photonics_service
+from icecube import icetray, dataclasses, dataio, toprec, recclasses, frame_object_diff,simclasses,WaveCalibrator
+from icecube import gulliver, gulliver_modules, lilliput,photonics_service,wavedeform,wavereform
+from icecube.payload_parsing import I3DOMLaunchExtractor
 load('millipede')
 load('stochastics')
 
@@ -44,12 +45,13 @@ directory = '/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/'
 file_list = os.listdir(directory+data_set_number)
 file_list_all = np.array([directory+data_set_number+'/'+i for i in file_list])
 file_list_all = np.array(np.array_split(file_list_all,200))
-print(file_list_all)
+#print(file_list_all)
 #### PUT YOUR FAVORITE GCD AND INPUT FILE HERE
 # This particular example file lives in Madison.
 GCDfile = '/data/sim/IceTop/2012/filtered/CORSIKA-ice-top/%s/level2/0000000-0000999/GeoCalibDetectorStatus_2012.56063_V1_OctSnow.i3.gz'%(data_set_number)
 x_list = list(range(file_list_all.shape[0]))
 x_list = np.array(x_list)
+
 def output_i3_root(i):
     infile = file_list_all[i]
     infile = [str(j) for j in infile]
@@ -101,14 +103,14 @@ def output_i3_root(i):
         ("FreeN",True),
         ("MinN",0),
         ("MaxN",200.0),
-        ("StepsizeN",0.2)
+        ("StepsizeN",2.0)
     )
 
     tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam3")(
         ("FreeD",True),
         ("MinD",0),
         ("MaxD",500.0),
-        ("StepsizeD",0.2)
+        ("StepsizeD",2.0)
     )
 
 
@@ -129,11 +131,7 @@ def output_i3_root(i):
     tray.AddModule("I3Reader","reader")(
         ("FileNameList", [GCDfile]+infile)
     )
-
-    ## Re-inflate the GCD from the diff's
-    #from icecube.frame_object_diff.segments import uncompress
-    #tray.AddSegment(uncompress, "uncompressme", base_filename=GCDfile)
-
+    
     tray.AddModule("I3LaputopFitter","CurvatureOnly")(
         ("SeedService","CurvSeed"),
         ("NSteps",3),                    # <--- tells it how many services to look for and perform
@@ -146,10 +144,7 @@ def output_i3_root(i):
         ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood
         ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood
     )
-
-#    tray.AddModule("Dump","dump")()
-
-
+    
     tray.AddModule("I3Writer","EventWriter")(
         ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
         ("Filename",I3_OUTFILE),
@@ -175,8 +170,6 @@ def output_i3_root(i):
                   "IT73AnalysisInIceQualityCuts"]),
         ("subeventstreams",["ice_top"])
     )
-
-
  
    
     # Execute the Tray
@@ -185,4 +178,4 @@ def output_i3_root(i):
 
 pool = mp.Pool(processes=10)
 pool.map(output_i3_root,x_list)
-   
+
