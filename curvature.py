@@ -45,7 +45,7 @@ directory = '/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/'
 file_list = os.listdir(directory+data_set_number)
 file_list_all = np.array([directory+data_set_number+'/'+i for i in file_list])
 file_list_all = np.array(np.array_split(file_list_all,200))
-#print(file_list_all)
+
 #### PUT YOUR FAVORITE GCD AND INPUT FILE HERE
 # This particular example file lives in Madison.
 GCDfile = '/data/sim/IceTop/2012/filtered/CORSIKA-ice-top/%s/level2/0000000-0000999/GeoCalibDetectorStatus_2012.56063_V1_OctSnow.i3.gz'%(data_set_number)

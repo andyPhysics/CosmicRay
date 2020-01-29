@@ -19,6 +19,8 @@ from icecube.stochastics import *
 import multiprocessing as mp
 
 from icecube.icetop_Level3_scripts.segments import level3_IceTop, level3_Coinc, IceTopQualityCuts
+from icecube.icetop_Level3_scripts import icetop_globals
+
 
 
 ## Are you using tableio?
@@ -41,7 +43,7 @@ args = parser.parse_args()
 
 workspace = expandvars("$I3_BUILD")
 #HOME = expandvars("$HOME")
-HOME = '/data/user/amedina/CosmicRay/Waveform_file/'
+HOME = '/data/user/amedina/Waveform_file/'
 
 data_set_number = args.directory_number
 directory = '/data/sim/IceTop/2012/filtered/CORSIKA-ice-top/%s/level2/'%(data_set_number)
@@ -67,9 +69,8 @@ x_list = np.array(x_list)
 class Remove_WaveformRange(icetray.I3Module):
     def DAQ(self,frame):
         raw_data = True
-        try:
-            frame["CleanIceTopRawData"]
-        except:
+        #if "CleanIceTopRawData" in frame:
+        if not "CalibratedWaveformRange" in frame:
             raw_data = False
         if raw_data:
             del frame["CalibratedWaveformRange"]
@@ -114,6 +115,7 @@ def output_i3_root(i):
     #    )
 
     ## This one is the standard one.
+
     tray.AddService("I3GulliverMinuitFactory","Minuit")(
         ("MinuitPrintLevel",-2),  
         ("FlatnessCheck",True),  
@@ -169,7 +171,9 @@ def output_i3_root(i):
     tray.AddModule("I3Reader","reader")(
         ("FileNameList", [GCDfile]+infile)
     )
-    
+
+    tray.AddModule(Remove_WaveformRange)
+
     tray.AddModule("I3LaputopFitter","CurvatureOnly")(
         ("SeedService","CurvSeed"),
         ("NSteps",3),                    # <--- tells it how many services to look for and perform
@@ -183,49 +187,184 @@ def output_i3_root(i):
         ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood
     )
 
-    tray.AddModule(Remove_WaveformRange)
+    from icecube.icetop_Level3_scripts.functions import count_stations
+    from icecube.icetop_Level3_scripts.modules import FilterWaveforms
+    from icecube.icetop_Level3_scripts.segments.extract_waveforms import ExtractWaveforms
 
-    tray.AddModule("I3WaveCalibrator", "sedan",
-                   Launches="CleanIceTopRawData",
-                   Waveforms="CalibratedWaveform",
-                   Errata="BorkedOMs",
-                   ATWDSaturationMargin=123,
-                   FADCSaturationMargin=0,
-               )
+    tray.AddModule(FilterWaveforms, 'FilterWaveforms',   #Puts IceTopWaveformWeight in the frame.                                                     
+                   pulses=icetop_globals.icetop_hlc_pulses,
+                   If = lambda frame: icetop_globals.icetop_hlc_pulses in frame and count_stations(dataclasses.I3RecoPulseSeriesMap.from_frame(frame, icetop_globals.icetop_hlc_pulses)) >= 5)
+    tray.AddSegment(ExtractWaveforms, 'IceTop')
+                    #If= lambda frame: "IceTopWaveformWeight" in frame and frame["IceTopWaveformWeight"].value!=0)
 
-    tray.AddModule("I3WaveformSplitter", "splitter",
-                   Input="CalibratedWaveform",
-                   HLC_ATWD="CalibratedATWD",
-                   HLC_FADC="CalibratedFADC_HLC",
-                   SLC="CalibratedFADC_SLC",
-                   PickUnsaturatedATWD=True,
-               )
 
-    tray.AddSegment(level3_Coinc,
-                    Detector='IC86',
-                    IceTopTrack='Laputop',
-                    InIcePulses='InIcePulses',
-                    IceTopPulses='CleanedHLCTankPulses',
+    itpulses='IceTopHLCSeedRTPulses'
+    
+    tray.AddSegment(level3_IceTop, "level3_IceTop",
+                    detector='IC86.2012',
+                    do_select = False,
+                    isMC=True,
+                    add_jitter=False,
+                    snowLambda=None
+                    )
+
+    def fix_spe(frame,pulses):
+        if pulses in frame: # Although InIcePulses should always be there                                                                                                      
+
+            corr = dataclasses.I3RecoPulseSeriesMapApplySPECorrection(pulses,"I3Calibration")
+            corrpulses = corr.apply(frame)
+            frame.Delete(pulses)
+            frame[pulses] = corrpulses
+            return True
+
+    tray.AddModule(fix_spe, "fixspe",pulses=icetop_globals.names["Level3"]["InIcePulses"],Streams=[icetray.I3Frame.DAQ, icetray.I3Frame.Physics])
+
+    tray.AddSegment(level3_Coinc,"level3_Coinc",
+                    Detector='IC86.2012',
                     isMC=True,
                     do_select=False,
-                    domeff=0.99, #Beware!                                                                                                                                                                
-                    spline_dir="/data/sim/sim-new/downloads/spline-tables/"
-                )
+                    IceTopTrack='Laputop',
+                    IceTopPulses=itpulses,
+    )
+
+    #Keys to Keep
+
+    wanted_general=['I3EventHeader',
+                    icetop_globals.filtermask,
+                    'I3TriggerHierarchy']
+
+
+    wanted_general+=['MCPrimary',
+                     'MCPrimaryInfo',
+                     'AirShowerComponents',
+                     'IceTopComponentPulses_Electron',
+                     'IceTopComponentPulses_ElectronFromChargedMesons',
+                     'IceTopComponentPulses_Gamma',
+                     'IceTopComponentPulses_GammaFromChargedMesons',
+                     'IceTopComponentPulses_Muon',
+                     'IceTopComponentPulses_Hadron',
+    ]
+
+    wanted_icetop_filter=['IceTop_EventPrescale',
+                          'IceTop_StandardFilter',
+                          'IceTop_InFillFilter']
+ 
+    wanted_icetop_pulses=[icetop_globals.icetop_hlc_pulses,
+                          icetop_globals.icetop_slc_pulses,
+                          icetop_globals.icetop_clean_hlc_pulses,
+                          icetop_globals.icetop_tank_pulse_merger_excluded_tanks,
+                          icetop_globals.icetop_cluster_cleaning_excluded_tanks,
+                          icetop_globals.icetop_HLCseed_clean_hlc_pulses,
+                          icetop_globals.icetop_HLCseed_excluded_tanks,
+                          icetop_globals.icetop_HLCseed_clean_hlc_pulses+'_SnowCorrected',
+                          'TankPulseMergerExcludedSLCTanks',
+                          'IceTopLaputopSeededSelectedHLC',  
+                          'IceTopLaputopSeededSelectedSLC',                                                                                                                                               
+                          'IceTopLaputopSmallSeededSelectedHLC',  
+                          'IceTopLaputopSmallSeededSelectedSLC',                                                                                                                                         
+                          ]
+
+    wanted_icetop_waveforms=['IceTopVEMCalibratedWaveforms',
+                             'IceTopWaveformWeight',
+                             'ReextractedHLCFADCWaveforms',
+                             'ReextractedSLCWaveforms']
+
+    wanted_icetop_reco=['ShowerCOG',
+                        'ShowerPlane',
+                        'ShowerPlaneParams',
+                        'Laputop',
+                        'LaputopParams',
+                        'LaputopSnowDiagnostics',
+                        'LaputopSmall',
+                        'LaputopSmallParams',
+                        'IsSmallShower'
+       #                 "CurvatureOnly",
+       #                 "CurvatureOnlyParams"
+                        ]
+    
+    wanted_icetop_cuts=['Laputop_FractionContainment',
+                        'Laputop_OnionContainment',
+                        'Laputop_NearestStationIsInfill',
+                        'StationDensity',
+                        'IceTopMaxSignal',
+                        'IceTopMaxSignalInEdge',
+                        'IceTopMaxSignalTank',
+                        'IceTopMaxSignalString',
+                        'IceTopNeighbourMaxSignal',
+                        'IT73AnalysisIceTopQualityCuts',
+                        ]
+
+    wanted=wanted_general+wanted_icetop_filter+wanted_icetop_pulses+wanted_icetop_waveforms+wanted_icetop_reco+wanted_icetop_cuts
+    
+    wanted_sta2 = wanted_general + wanted_icetop_filter + \
+                    [icetop_globals.icetop_hlc_pulses,
+                    icetop_globals.icetop_slc_pulses,
+                    icetop_globals.icetop_clean_hlc_pulses,
+                    icetop_globals.icetop_cluster_cleaning_excluded_tanks,
+                    icetop_globals.icetop_tank_pulse_merger_excluded_tanks,
+                    'TankPulseMergerExcludedSLCTanks']
+
+    #InIce Keys to Keep
+    wanted_inice_pulses=[icetop_globals.inice_pulses,
+                         icetop_globals.inice_coinc_pulses,
+                         icetop_globals.inice_clean_coinc_pulses,
+                         icetop_globals.inice_clean_coinc_pulses+"TimeRange",
+                         icetop_globals.inice_clean_coinc_pulses+"_Balloon",
+                         "SaturationWindows",
+                         "CalibrationErrata",
+                         'SRT'+icetop_globals.inice_coinc_pulses,
+                         'NCh_'+icetop_globals.inice_clean_coinc_pulses]
+
+    wanted_inice_reco=["Millipede",
+                       "MillipedeFitParams",
+                       "Millipede_dEdX",
+                       "Stoch_Reco",
+                       "Stoch_Reco2",
+                       "I3MuonEnergyLaputopCascadeParams",
+                       "I3MuonEnergyLaputopParams"
+    ]
+   
+    wanted_inice_cuts=['IT73AnalysisInIceQualityCuts']
+
+    wanted_inice_muon=['CoincMuonReco_LineFit',
+                       'CoincMuonReco_SPEFit2',
+                       'CoincMuonReco_LineFitParams',
+                       'CoincMuonReco_SPEFit2FitParams',
+                       'CoincMuonReco_MPEFit',
+                       'CoincMuonReco_MPEFitFitParams',
+                       'CoincMuonReco_MPEFitMuEX',
+                       'CoincMuonReco_CVMultiplicity',
+                       'CoincMuonReco_CVStatistics',
+                       'CoincMuonReco_MPEFitCharacteristics',
+                       'CoincMuonReco_SPEFit2Characteristics',
+                       'CoincMuonReco_MPEFitTruncated_BINS_Muon',
+                       'CoincMuonReco_MPEFitTruncated_AllBINS_Muon',
+                       'CoincMuonReco_MPEFitTruncated_ORIG_Muon',
+                       'CoincMuonReco_SPEFit2_D4R_CascadeParams',
+                       'CoincMuonReco_SPEFit2_D4R_Params',
+                       'CoincMuonReco_MPEFitDirectHitsC'
+    ]
+
+    wanted=wanted+wanted_inice_pulses+wanted_inice_reco+wanted_inice_cuts+ wanted_inice_muon
+
+    tray.AddModule("Keep", 'DropObjects',
+                   Keys = wanted
+                   )
 
     
     tray.AddModule("I3Writer","EventWriter")(
         ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
         ("Filename",I3_OUTFILE),
     )
- 
+
     ## Output root file
     root = I3ROOTTableService(ROOTFILE,"aTree")
     tray.AddModule(I3TableWriter,'writer')(
         ("tableservice", root),
         ("keys",[ "Laputop", 
                   "LaputopParams",
-                  "CurvatureOnly",
-                  "CurvatureOnlyParams",
+                  #"CurvatureOnly",
+                  #"CurvatureOnlyParams",
                   "Millipede",
                   "MillipedeFitParams",
                   "Millipede_dEdX",
@@ -235,15 +374,15 @@ def output_i3_root(i):
                   "MCPrimary",
                   "MCPrimaryInfo",
                   "IT73AnalysisIceTopQualityCuts",
-                  "IT73AnalysisInIceQualityCuts"]),
-        ("subeventstreams",["ice_top"])
+                  "IT73AnalysisInIceQualityCuts",
+                  'IceTopVEMCalibratedWaveforms']),
+        ("subeventstreams",['InIceSplit',"ice_top"])
     )
- 
+
    
     # Execute the Tray
     # Just to make sure it's working!
     tray.Execute()
 
-#pool = mp.Pool(processes=10)
-#pool.map(output_i3_root,x_list)
-
+pool = mp.Pool(processes=5)
+pool.map(output_i3_root,x_list)
