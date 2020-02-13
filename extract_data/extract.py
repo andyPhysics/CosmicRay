@@ -32,7 +32,7 @@ parser.add_argument("-f","--files",type=str,nargs='+',
 args = parser.parse_args()
 output_name = args.output_name
 
-directory = '/data/user/amedina/CosmicRay/Curvature/'
+directory = '/data/user/amedina/CosmicRay2/Waveform_file/'
 output_directories = []
 print(args.files)
 for i in args.files:

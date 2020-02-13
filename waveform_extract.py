@@ -174,19 +174,6 @@ def output_i3_root(i):
 
     tray.AddModule(Remove_WaveformRange)
 
-    tray.AddModule("I3LaputopFitter","CurvatureOnly")(
-        ("SeedService","CurvSeed"),
-        ("NSteps",3),                    # <--- tells it how many services to look for and perform
-        ("Parametrization1","CurvParam"),
-        ("Parametrization2","CurvParam2"),
-        ("Parametrization3","CurvParam3"),
-        ("StoragePolicy","OnlyBestFit"),
-        ("Minimizer","Minuit"),
-        ("LogLikelihoodService","ToprecLike2"),     # the three likelihoods
-        ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood
-        ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood
-    )
-
     from icecube.icetop_Level3_scripts.functions import count_stations
     from icecube.icetop_Level3_scripts.modules import FilterWaveforms
     from icecube.icetop_Level3_scripts.segments.extract_waveforms import ExtractWaveforms
@@ -194,8 +181,26 @@ def output_i3_root(i):
     tray.AddModule(FilterWaveforms, 'FilterWaveforms',   #Puts IceTopWaveformWeight in the frame.                                                     
                    pulses=icetop_globals.icetop_hlc_pulses,
                    If = lambda frame: icetop_globals.icetop_hlc_pulses in frame and count_stations(dataclasses.I3RecoPulseSeriesMap.from_frame(frame, icetop_globals.icetop_hlc_pulses)) >= 5)
-    tray.AddSegment(ExtractWaveforms, 'IceTop')
-                    #If= lambda frame: "IceTopWaveformWeight" in frame and frame["IceTopWaveformWeight"].value!=0)
+
+    name = "IceTop"
+    InputLaunches = icetop_globals.icetop_raw_data
+    OutputWaveforms = 'IceTopCalibratedWaveforms'
+    tray.AddModule("I3WaveCalibrator", name+"_WaveCalibrator_IceTop",
+                   Launches=InputLaunches, If=lambda fr: If(fr) and InputLaunches in fr,
+                   Waveforms='ReextractedWaveforms',
+                   WaveformRange="",
+                   Errata="ReextractedErrata")
+
+    tray.AddModule('I3WaveformSplitter', name + '_IceTopSplitter',
+                   Input = 'ReextractedWaveforms',
+                   HLC_ATWD = OutputWaveforms,
+                   HLC_FADC = 'ReextractedHLCFADCWaveforms',
+                   SLC = 'ReextractedSLCWaveforms',
+                   Force = True, # ! put all maps in the frame, even if they are empty                                                                      
+                   PickUnsaturatedATWD = True,  # ! do not keep all ATWDs, but only the highest non-saturated gain one                                      
+                   If = lambda fr: If(fr) and InputLaunches in fr,
+                   )
+
 
 
     itpulses='IceTopHLCSeedRTPulses'
@@ -225,6 +230,19 @@ def output_i3_root(i):
                     do_select=False,
                     IceTopTrack='Laputop',
                     IceTopPulses=itpulses,
+    )
+
+    tray.AddModule("I3LaputopFitter","CurvatureOnly")(
+        ("SeedService","CurvSeed"),
+        ("NSteps",3),                    # <--- tells it how many services to look for and perform                                                       
+        ("Parametrization1","CurvParam"),
+        ("Parametrization2","CurvParam2"),
+        ("Parametrization3","CurvParam3"),
+        ("StoragePolicy","OnlyBestFit"),
+        ("Minimizer","Minuit"),
+        ("LogLikelihoodService","ToprecLike2"),     # the three likelihoods                                                                               
+        ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood                                                                            
+        ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood                                               
     )
 
     #Keys to Keep
@@ -264,7 +282,7 @@ def output_i3_root(i):
                           'IceTopLaputopSmallSeededSelectedSLC',                                                                                                                                         
                           ]
 
-    wanted_icetop_waveforms=['IceTopVEMCalibratedWaveforms',
+    wanted_icetop_waveforms=['IceTopCalibratedWaveforms',
                              'IceTopWaveformWeight',
                              'ReextractedHLCFADCWaveforms',
                              'ReextractedSLCWaveforms']
@@ -277,9 +295,9 @@ def output_i3_root(i):
                         'LaputopSnowDiagnostics',
                         'LaputopSmall',
                         'LaputopSmallParams',
-                        'IsSmallShower'
-       #                 "CurvatureOnly",
-       #                 "CurvatureOnlyParams"
+                        'IsSmallShower',
+                        "CurvatureOnly",
+                        "CurvatureOnlyParams"
                         ]
     
     wanted_icetop_cuts=['Laputop_FractionContainment',
@@ -363,8 +381,8 @@ def output_i3_root(i):
         ("tableservice", root),
         ("keys",[ "Laputop", 
                   "LaputopParams",
-                  #"CurvatureOnly",
-                  #"CurvatureOnlyParams",
+                  "CurvatureOnly",
+                  "CurvatureOnlyParams",
                   "Millipede",
                   "MillipedeFitParams",
                   "Millipede_dEdX",
