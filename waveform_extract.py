@@ -58,7 +58,7 @@ file_list_all = np.hstack(file_list)
 file_list_all = np.sort(file_list_all)[1:-1]
 file_list_all = [str(i) for i in file_list_all]
 
-file_list_all = np.array(np.array_split(file_list_all,500))
+file_list_all = np.array(np.array_split(file_list_all,1000))
     
 #### PUT YOUR FAVORITE GCD AND INPUT FILE HERE
 
