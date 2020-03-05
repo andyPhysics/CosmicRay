@@ -24,32 +24,76 @@ from icecube.rootwriter import I3ROOTTableService
 import numpy as np
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-d", "--directory",type=str,default='12360',
+                    dest="directory_number",help="directory number")
+args = parser.parse_args()
+
 #level2 files are separated into 1000 per sub directory
-level2_directory = '/data/sim/IceTop/2012/filtered/CORSIKA-ice-top/12360/level2/0000000-0000999/' 
-level2_file = level2_directory + 'Level2_IC86_corsika_icetop.010410.000002.i3.bz2'
+l2_directory = '/data/sim/IceTop/2012/filtered/CORSIKA-ice-top/%s/level2/'%(args.directory_number) 
 
 #All files are in one directory for level3 files
-level3_directory = '/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/12360/'
-level3_file = level3_directory + 'Level3_IC86.2012_12360_Run000002.i3.gz'
+l3_directory = '/data/ana/CosmicRay/IceTop_level3/sim/IC86.2012/%s/'%(args.directory_number)
 
+l3_file_list = []
+l3_directory_list = os.listdir(l3_directory)
+for i in l3_directory_list:
+    if i.endswith('.i3.gz'):
+        l3_file_list.append(l3_directory+i)
 
-class Check_Laputop(I3Module):
-    def __init__(self, context):
-        I3Module.__init__(self, context)
+l3_file_list = np.array(l3_file_list)
+l3_file_list = np.sort(l3_file_list)
 
-    def Configure(self):
-        pass
+check_numbers = [i.split('.')[-3].split('Run')[-1] for i in l3_file_list]
 
-    def Physics(self, frame):
-        self.PushFrame(frame)
+l2_directory_list = os.listdir(l2_directory)
+l2_file_list = []
+for i in l2_directory_list:
+    x = np.array(os.listdir(l2_directory+i))
+    y = [l2_directory+i+'/'+m for m in x]
+    for j in y:
+        if j.endswith('.i3.bz2'):
+            if j.split('.')[-3] in check_numbers:
+                l2_file_list.append(j)
 
-tray = I3Tray()
+l2_file_list = np.sort(l2_file_list)
 
-tray.AddModule("I3Reader","reader")(
-        ("FileNameList", [level3_file])
-    )
+def process_files(file_tuple):
+    print(file_tuple)
+    outdir = '/data/user/amedina/CosmicRay/I3_Files/%s'%(args.directory_number)
 
-tray.Add("Dump")
+    assert os.path.isfile(file_tuple[1]), "file doesn't exist: {}".format(file_tuple[1])
+    assert os.path.isfile(file_tuple[0]), "file doesn't exist: {}".format(file_tuple[0])
+    outfile = dataio.I3File(os.path.join(outdir,os.path.basename(file_tuple[1]).replace('.i3','.i3')),'w')
+    l3_file = dataio.I3File(file_tuple[1],'r')
+    l2_file = dataio.I3File(file_tuple[0],'r')
 
-tray.Execute(10)
+    while l3_file.more():
+        l3_fr = l3_file.pop_physics()
 
+        passed_all = True
+        for cut in l3_fr['IT73AnalysisIceTopQualityCuts'].values():
+            if not cut:
+                passed_all = False
+
+        if not passed_all:
+            continue
+        
+        l3_header = l3_fr["I3EventHeader"]
+        while l2_file.more():
+            l2_fr = l2_file.pop_daq()
+            l2_header = l2_fr["I3EventHeader"]
+            if l2_header.run_id == l3_header.run_id and l2_header.event_id == l3_header.event_id:
+                for l3_fr in l3_file.get_current_frame_and_deps():
+                    l3_fr['CleanIceTopRawData'] = l2_fr['CleanIceTopRawData']
+                    outfile.push(l3_fr)
+                break
+
+    outfile.close()
+    l3_file.close()
+    l2_file.close()
+
+file_list = list(zip(l2_file_list,l3_file_list))
+
+pool = mp.Pool(processes=5)
+pool.map(process_files,file_list)
