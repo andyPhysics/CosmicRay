@@ -7,8 +7,6 @@ from os.path import expandvars
 
 from I3Tray import *
 from icecube import icetray, dataclasses, dataio, toprec, recclasses, frame_object_diff,simclasses,WaveCalibrator,tpx
-from icecube import gulliver, gulliver_modules, lilliput,photonics_service,wavedeform,wavereform
-from icecube.payload_parsing import I3DOMLaunchExtractor
 load('millipede')
 load('stochastics')
 
@@ -16,12 +14,8 @@ from icecube.icetray import I3Module
 from icecube.dataclasses import I3EventHeader, I3Particle
 from icecube.recclasses import I3LaputopParams
 from icecube.stochastics import *
+from icecube.tpx import *
 import multiprocessing as mp
-
-from icecube.icetop_Level3_scripts.segments import level3_IceTop, level3_Coinc, IceTopQualityCuts
-from icecube.icetop_Level3_scripts import icetop_globals
-
-
 
 ## Are you using tableio?
 from icecube.tableio import I3TableWriter
@@ -50,8 +44,6 @@ file_list = []
 for i in directory_list:
     file_list.append(directory+i)
 
-file_list = np.array(file_list)
-
 I3_OUTFILE = output_directory + data_set_number + '.i3.bz2' 
 ROOTFILE = output_directory + data_set_number + '.root'
     
@@ -59,25 +51,29 @@ ROOTFILE = output_directory + data_set_number + '.root'
 
 GCDFile = '/data/sim/IceTop/2012/filtered/CORSIKA-ice-top/%s/level2/0000000-0000999/GeoCalibDetectorStatus_2012.56063_V1_OctSnow.i3.gz'%(data_set_number)
 
+
 @icetray.traysegment
 def ExtractWaveforms(tray, name, InputLaunches='CleanIceTopRawData',
-                     OutputWaveforms='IceTopCalibratedWaveforms'):
-    OutputWaveforms = name + 'CalibratedWaveforms'
+                     OutputWaveforms='CalibratedHLCWaveforms'):
 
     tray.AddModule("I3WaveCalibrator", name+"_WaveCalibrator_IceTop",
                    Launches=InputLaunches,
                    Waveforms='ReextractedWaveforms',
-                   WaveformRange="",
                    Errata="ReextractedErrata")
 
     tray.AddModule('I3WaveformSplitter', name + '_IceTopSplitter',
                    Input = 'ReextractedWaveforms',
                    HLC_ATWD = OutputWaveforms,
-                   HLC_FADC = 'ReextractedHLCFADCWaveforms',
-                   SLC = 'ReextractedSLCWaveforms',
-                   Force = True, # ! put all maps in the frame, even if they are empty                                                             
+                   SLC = 'CalibratedSLCWaveforms',
                    PickUnsaturatedATWD = True,  # ! do not keep all ATWDs, but only the highest non-saturated gain one                                        
                    )
+
+def GetRiseTime(values,time,percentage):
+    bin_value = 0
+    for i in zip(values,time):
+        if i[0] > max(values) * percentage:
+            return i[1],bin_value
+        bin_value+=1
 
 class Process_Waveforms(I3Module):
     def __init__(self, context):
@@ -85,7 +81,7 @@ class Process_Waveforms(I3Module):
 
     def Physics(self, frame):
         mask = frame['IceTopLaputopSeededSelectedHLC'] #These are the keys of the HLC events that are used for reconstruction
-        waveforms = frame['IceTopCalibratedWaveforms']
+        waveforms = frame['CalibratedHLCWaveforms']
         keys = []
         for i in zip(np.hstack(mask.bits),frame[mask.source].keys()):
             if i[0]:
@@ -93,10 +89,78 @@ class Process_Waveforms(I3Module):
         HLCWaveforms = dataclasses.I3WaveformSeriesMap()
         for i in keys:
             HLCWaveforms[i] = waveforms[i]
-        frame['HLCWaveforms'] = HLCWaveforms
+        frame['LaputopHLCWaveforms'] = HLCWaveforms
         self.PushFrame(frame)
 
-file_list = ['/data/user/amedina/CosmicRay/I3_Files/12360/Level3_IC86.2012_12360_Run003010.i3.gz']
+class Extract_info(I3Module):
+    def __init__(self, context):
+        I3Module.__init__(self, context)
+
+    def Physics(self, frame):
+        OutputWaveformInfo = dataclasses.I3MapStringStringDouble()
+        
+        for i in frame['LaputopHLCWaveforms'].keys():
+            key = str(i)
+            waveform = frame['LaputopHLCWaveforms'][i][0].waveform
+            time = frame['LaputopHLCWaveforms'][i][0].time
+            binwidth = frame['LaputopHLCWaveforms'][i][0].binwidth
+            
+            time_values = [i*binwidth + time for i in range(len(waveform))]
+            waveform_check = np.array(waveform) >= 0
+
+            CDF = []
+            CDF_value = 0
+            for j in range(len(waveform)):
+                if waveform_check[j]:
+                    CDF_value = CDF_value + binwidth * waveform[j]
+                    CDF.append(CDF_value)
+                else:
+                    CDF.append(CDF_value)
+
+
+            fe_impedance = frame['I3Calibration'].dom_cal[i].front_end_impedance
+            charge = CDF[-1]/fe_impedance
+            spe_mean = dataclasses.spe_mean(frame['I3DetectorStatus'].dom_status[i],frame['I3Calibration'].dom_cal[i])
+
+            charge_pe = charge/spe_mean
+
+
+            Amplitude = 0
+            for k in waveform:
+                if k-Amplitude >= 0:
+                    Amplitude = k
+                else:
+                    break
+
+            Time_10,bin_10 = GetRiseTime(CDF,time_values,0.1)
+            Time_50,bin_50 = GetRiseTime(CDF,time_values,0.5)
+            Time_90,bin_90 = GetRiseTime(CDF,time_values,0.9)
+
+            ninety_slope = (CDF[bin_90] - CDF[bin_10])/(bin_90 - bin_10)
+            fifty_slope = (CDF[bin_50] - CDF[bin_10])/(bin_50 - bin_10)
+
+            tmin = -200.0 #ns
+
+            leading_edge = time + (bin_10 - CDF[bin_10]/ninety_slope)*binwidth
+            if ninety_slope <= 0 or not np.isfinite(ninety_slope) or not (leading_edge >= time + tmin):
+                leading_edge = time + tmin
+                                                            
+
+            OutputWaveformInfo[key] = dataclasses.I3MapStringDouble()
+            OutputWaveformInfo[key]['StartTime'] = time
+            OutputWaveformInfo[key]['Binwidth'] = binwidth
+            OutputWaveformInfo[key]['Time_50'] = Time_50
+            OutputWaveformInfo[key]['Time_90'] = Time_90
+            OutputWaveformInfo[key]['Time_10'] = Time_10
+            OutputWaveformInfo[key]['Amplitude'] = Amplitude
+            OutputWaveformInfo[key]['Charge'] = charge
+            OutputWaveformInfo[key]['Charge_PE'] = charge_pe
+            OutputWaveformInfo[key]['90_slope'] = ninety_slope
+            OutputWaveformInfo[key]['leading_edge'] = leading_edge
+
+        frame['WaveformInfo'] = OutputWaveformInfo
+        self.PushFrame(frame)
+
 
 tray = I3Tray()
 
@@ -118,7 +182,7 @@ tray.AddModule('I3TopHLCPulseExtractor', 'TopHLCPulseExtractor',
                PEPulses  = 'IceTopHLCPEPulses',         # Pulses in PE, set to empty string to disable output
                PulseInfo = 'IceTopHLCPulseInfo',        # PulseInfo: amplitude, rise time, etc. Empty string to disable
                VEMPulses = 'IceTopHLCVEMPulses',        # Pulses in VEM, set to empty string to disable
-               Waveforms = 'IceTopCalibratedWaveforms',   # Input HLC waveforms from WaveCalibrator
+               Waveforms = 'CalibratedHLCWaveforms',   # Input HLC waveforms from WaveCalibrator
                BadDomList = "BadDomsList"
 )
 
@@ -126,11 +190,13 @@ tray.AddModule('I3TopHLCPulseExtractor', 'TopHLCPulseExtractor',
 tray.AddModule('I3TopSLCPulseExtractor', 'TopSLCPulseExtractor',
                PEPulses  = 'IceTopSLCPEPulses',         # (see above ...)
                VEMPulses = 'IceTopSLCVEMPulses',
-               Waveforms = 'ReextractedSLCWaveforms',   # Input SLC waveforms from WaveCalibrator
+               Waveforms = 'CalibratedSLCWaveforms',   # Input SLC waveforms from WaveCalibrator
                BadDomList = "BadDomsListSLC"
 )
 
-tray.AddModule(Process_Waveforms)
+tray.AddModule(Process_Waveforms,'Process_wavefomrs')
+
+tray.AddModule(Extract_info)
 
 tray.AddModule("I3Writer","EventWriter")(
     ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
@@ -142,17 +208,16 @@ root = I3ROOTTableService(ROOTFILE,"aTree")
 tray.AddModule(I3TableWriter,'writer')(
     ("tableservice", root),
     ("keys",['I3EventHeader',
-             'IceTopCalibratedWaveforms',
-             'IceTopWaveformWeight',
-             'ReextractedHLCFADCWaveforms',
-             'ReextractedSLCWaveforms',
+             'CalibratedHLCWaveforms',
+             'CalibratedSLCWaveforms',
+             'MCPrimary',
+             'MCPrimaryInfo',
+             'LaputopHLCWaveforms',
              'IceTopHLCPEPulses',
              'IceTopHLCPulseInfo',
              'IceTopHLCVEMPulses',
              'IceTopSLCPEPulses',
              'IceTopSLCVEMPulses',
-             'I3MCPESeriesMap',
-             'I3MCTree',
              'IceTopComponentPulses_Electron',
              'IceTopComponentPulses_ElectronFromChargedMesons',
              'IceTopComponentPulses_Gamma',
