@@ -81,12 +81,15 @@ def process_files(file_tuple):
         
         l3_header = l3_fr["I3EventHeader"]
         while l2_file.more():
-            l2_fr = l2_file.pop_daq()
+            try:
+                l2_fr = l2_file.pop_daq()
+            except RuntimeError:
+                continue
             l2_header = l2_fr["I3EventHeader"]
             if l2_header.run_id == l3_header.run_id and l2_header.event_id == l3_header.event_id:
-                for l3_fr in l3_file.get_current_frame_and_deps():
-                    l3_fr['CleanIceTopRawData'] = l2_fr['CleanIceTopRawData']
-                    outfile.push(l3_fr)
+                for l3_fr1 in l3_file.get_current_frame_and_deps():
+                    l3_fr1['CleanIceTopRawData'] = l2_fr['CleanIceTopRawData']
+                    outfile.push(l3_fr1)
                 break
 
     outfile.close()

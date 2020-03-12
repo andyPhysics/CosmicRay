@@ -81,15 +81,37 @@ class Process_Waveforms(I3Module):
 
     def Physics(self, frame):
         mask = frame['IceTopLaputopSeededSelectedHLC'] #These are the keys of the HLC events that are used for reconstruction
+        check = False
+        if 'IceTopLaputopSeededSelectedSLC' in frame:
+            check = True
+            mask_2 = frame['IceTopLaputopSeededSelectedSLC']
         waveforms = frame['CalibratedHLCWaveforms']
         keys = []
+        keys_2 = []
         for i in zip(np.hstack(mask.bits),frame[mask.source].keys()):
             if i[0]:
                 keys.append(i[1])
+        
+        if check:
+            for i in zip(np.hstack(mask_2.bits),frame[mask_2.source].keys()):
+                if i[0]:
+                    keys_2.append(i[1])
+
         HLCWaveforms = dataclasses.I3WaveformSeriesMap()
+        PE = dataclasses.I3RecoPulseSeriesMap()
+        PE_2 = dataclasses.I3RecoPulseSeriesMap()
+
         for i in keys:
             HLCWaveforms[i] = waveforms[i]
+            PE[i] = frame['IceTopHLCPEPulses'][i]
+
+        if check:
+            for i in keys_2:
+                PE_2[i] = frame['IceTopSLCPEPulses'][i]
+            
         frame['LaputopHLCWaveforms'] = HLCWaveforms
+        frame['LaputopHLCPE'] = PE
+        frame['LaputopSLCPE'] = PE_2
         self.PushFrame(frame)
 
 class Extract_info(I3Module):
@@ -223,7 +245,10 @@ tray.AddModule(I3TableWriter,'writer')(
              'IceTopComponentPulses_Gamma',
              'IceTopComponentPulses_GammaFromChargedMesons',
              'IceTopComponentPulses_Hadron',
-             'IceTopComponentPulses_Muon'
+             'IceTopComponentPulses_Muon',
+             'LaputopHLCPE',
+             'LaputopSLCPE',
+             'LaputopParams'
          ]),
     ("subeventstreams",['InIceSplit',"ice_top"])
 )
