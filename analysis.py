@@ -29,6 +29,8 @@ icetray.set_log_level(icetray.I3LogLevel.LOG_INFO)
 icetray.set_log_level_for_unit('Laputop', icetray.I3LogLevel.LOG_DEBUG)
 icetray.set_log_level_for_unit('Curvature', icetray.I3LogLevel.LOG_DEBUG)
 
+c = .299 #m/ns
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--directory",type=str,default='12360',
                     dest="directory_number",help="directory number")
@@ -92,7 +94,7 @@ class Process_Waveforms(I3Module):
             if i[0]:
                 keys.append(i[1])
         
-        if check:
+        if check and len(mask_2.bits) != 0:
             for i in zip(np.hstack(mask_2.bits),frame[mask_2.source].keys()):
                 if i[0]:
                     keys_2.append(i[1])
@@ -184,6 +186,56 @@ class Extract_info(I3Module):
         self.PushFrame(frame)
 
 
+class Get_data(I3Module):
+    def __init__(self, context):
+        I3Module.__init__(self, context)
+
+    def Physics(self, frame):
+
+        a = 4.823 * 10.0**(-4.0) #ns/m^2
+        b = 19.41 #ns
+        sigma = 83.5 #m
+
+        output_map = dataclasses.I3MapStringStringDouble()
+
+        Laputop = frame['Laputop']
+        x_core = np.array([Laputop.pos.x,Laputop.pos.y,Laputop.pos.z])
+        t_core = Laputop.time
+        theta = Laputop.dir.theta 
+        phi = Laputop.dir.phi
+        n = np.array([np.sin(theta) * np.cos(phi) , np.sin(theta) * np.sin(phi), np.cos(theta)])
+        
+        for i in frame['LaputopSLCPE'].keys():
+            output_map[str(i)] = dataclasses.I3MapStringDouble()
+
+            output_map[str(i)]['charge'] = frame['LaputopSLCPE'][i][0].charge
+            time = frame['LaputopSLCPE'][i][0].time
+            position_dom = frame['I3Geometry'].omgeo[i].position
+            x_dom = np.array([position_dom.x , position_dom.y , position_dom.z])
+            
+            R_square = np.dot(x_core-x_dom,x_core-x_dom)
+            delta_T = a * R_square + b * (1 - np.exp(-R_square/(2*(sigma**2.0))))
+            time_signal = time + (1/c) * np.dot(x_core-x_dom,n) + delta_T
+            
+            output_map[str(i)]['time'] = time_signal
+
+        for i in frame['LaputopHLCPE'].keys():
+            output_map[str(i)] = dataclasses.I3MapStringDouble()
+
+            output_map[str(i)]['charge'] = frame['LaputopHLCPE'][i][0].charge
+            time = frame['LaputopHLCPE'][i][0].time
+            position_dom = frame['I3Geometry'].omgeo[i].position
+            x_dom = np.array([position_dom.x , position_dom.y , position_dom.z])
+
+            R_square = np.dot(x_core-x_dom,x_core-x_dom)
+            delta_T = a * R_square + b * (1 - np.exp(-R_square/(2*(sigma**2.0))))
+            time_signal = time + (1/c) * np.dot(x_core-x_dom,n) + delta_T
+
+            output_map[str(i)]['time'] = time_signal
+
+        frame['All_data'] = output_map
+        self.PushFrame(frame)
+
 tray = I3Tray()
 
 ########## SERVICES FOR GULLIVER ##########
@@ -194,7 +246,7 @@ tray = I3Tray()
 #                 Reader and whatnot
 #**************************************************
 
-tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + file_list))
+tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + file_list)
 
 tray.AddSegment(ExtractWaveforms, 'IceTop')
                
@@ -219,6 +271,8 @@ tray.AddModule('I3TopSLCPulseExtractor', 'TopSLCPulseExtractor',
 tray.AddModule(Process_Waveforms,'Process_wavefomrs')
 
 tray.AddModule(Extract_info)
+
+tray.AddModule(Get_data)
 
 tray.AddModule("I3Writer","EventWriter")(
     ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
@@ -248,7 +302,8 @@ tray.AddModule(I3TableWriter,'writer')(
              'IceTopComponentPulses_Muon',
              'LaputopHLCPE',
              'LaputopSLCPE',
-             'LaputopParams'
+             'LaputopParams',
+             'All_data'
          ]),
     ("subeventstreams",['InIceSplit',"ice_top"])
 )
