@@ -191,12 +191,11 @@ class Get_data(I3Module):
         I3Module.__init__(self, context)
 
     def Physics(self, frame):
-
         a = 4.823 * 10.0**(-4.0) #ns/m^2
         b = 19.41 #ns
         sigma = 83.5 #m
 
-        output_map = dataclasses.I3MapStringStringDouble()
+        output_map = dataclasses.I3RecoPulseSeriesMap()
 
         Laputop = frame['Laputop']
         x_core = np.array([Laputop.pos.x,Laputop.pos.y,Laputop.pos.z])
@@ -206,9 +205,10 @@ class Get_data(I3Module):
         n = np.array([np.sin(theta) * np.cos(phi) , np.sin(theta) * np.sin(phi), np.cos(theta)])
         
         for i in frame['LaputopSLCPE'].keys():
-            output_map[str(i)] = dataclasses.I3MapStringDouble()
+            output_map[i] = dataclasses.I3RecoPulseSeries()
 
-            output_map[str(i)]['charge'] = frame['LaputopSLCPE'][i][0].charge
+            pulse = dataclasses.I3RecoPulse()
+            pulse.charge = frame['LaputopSLCPE'][i][0].charge
             time = frame['LaputopSLCPE'][i][0].time
             position_dom = frame['I3Geometry'].omgeo[i].position
             x_dom = np.array([position_dom.x , position_dom.y , position_dom.z])
@@ -217,12 +217,14 @@ class Get_data(I3Module):
             delta_T = a * R_square + b * (1 - np.exp(-R_square/(2*(sigma**2.0))))
             time_signal = time + (1/c) * np.dot(x_core-x_dom,n) + delta_T
             
-            output_map[str(i)]['time'] = time_signal
+            pulse.time = time_signal
+            output_map[i].append(pulse)
 
         for i in frame['LaputopHLCPE'].keys():
-            output_map[str(i)] = dataclasses.I3MapStringDouble()
+            output_map[i] = dataclasses.I3RecoPulseSeries()
+            pulse = dataclasses.I3RecoPulse()
 
-            output_map[str(i)]['charge'] = frame['LaputopHLCPE'][i][0].charge
+            pulse.charge = frame['LaputopHLCPE'][i][0].charge
             time = frame['LaputopHLCPE'][i][0].time
             position_dom = frame['I3Geometry'].omgeo[i].position
             x_dom = np.array([position_dom.x , position_dom.y , position_dom.z])
@@ -231,9 +233,10 @@ class Get_data(I3Module):
             delta_T = a * R_square + b * (1 - np.exp(-R_square/(2*(sigma**2.0))))
             time_signal = time + (1/c) * np.dot(x_core-x_dom,n) + delta_T
 
-            output_map[str(i)]['time'] = time_signal
+            pulse.time = time_signal
+            output_map[i].append(pulse)
 
-        frame['All_data'] = output_map
+        frame['All_pulses'] = output_map
         self.PushFrame(frame)
 
 tray = I3Tray()
@@ -246,7 +249,7 @@ tray = I3Tray()
 #                 Reader and whatnot
 #**************************************************
 
-tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + file_list)
+tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + file_list))
 
 tray.AddSegment(ExtractWaveforms, 'IceTop')
                
@@ -294,12 +297,6 @@ tray.AddModule(I3TableWriter,'writer')(
              'IceTopHLCVEMPulses',
              'IceTopSLCPEPulses',
              'IceTopSLCVEMPulses',
-             'IceTopComponentPulses_Electron',
-             'IceTopComponentPulses_ElectronFromChargedMesons',
-             'IceTopComponentPulses_Gamma',
-             'IceTopComponentPulses_GammaFromChargedMesons',
-             'IceTopComponentPulses_Hadron',
-             'IceTopComponentPulses_Muon',
              'LaputopHLCPE',
              'LaputopSLCPE',
              'LaputopParams',
