@@ -15,7 +15,7 @@ from icecube.icetop_Level3_scripts.segments import IceTopQualityCuts
 import numpy as np
 from icecube.dataclasses import *
 
-infile = ['Subset_0.i3']
+infile = ['/home/andy/Subset_0.i3']
 gain_doms = {}
 
 class PutInts(icetray.I3Module):

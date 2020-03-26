@@ -15,7 +15,7 @@ from icecube.icetop_Level3_scripts.segments import IceTopQualityCuts
 import numpy as np
 from icecube.dataclasses import *
 
-infile = ['GeoCalibDetectorStatus_2012.56063_V1_OctSnow.i3.gz']
+infile = ['/home/andy/GeoCalibDetectorStatus_2012.56063_V1_OctSnow.i3.gz']
 
 geometry = {}
 
