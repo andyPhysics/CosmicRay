@@ -194,6 +194,12 @@ class Get_data(I3Module):
         a = 4.823 * 10.0**(-4.0) #ns/m^2
         b = 19.41 #ns
         sigma = 83.5 #m
+        t_cog = frame['ShowerCOG'].time
+        zenith_core = frame['Laputop'].dir.zenith
+        azimuth_core = frame['Laputop'].dir.azimuth
+        unit_core = np.array([np.sin(zenith_core)*np.cos(azimuth_core),
+                              np.sin(zenith_core)*np.sin(azimuth_core),
+                              np.cos(zenith_core)])
 
         output_map = dataclasses.I3RecoPulseSeriesMap()
 
@@ -203,7 +209,10 @@ class Get_data(I3Module):
         theta = Laputop.dir.theta 
         phi = Laputop.dir.phi
         n = np.array([np.sin(theta) * np.cos(phi) , np.sin(theta) * np.sin(phi), np.cos(theta)])
-        
+
+        radius = dataclasses.I3MapKeyVectorDouble()
+        radius_old = dataclasses.I3MapKeyVectorDouble()
+
         for i in frame['LaputopSLCPE'].keys():
             output_map[i] = dataclasses.I3RecoPulseSeries()
 
@@ -213,10 +222,18 @@ class Get_data(I3Module):
             position_dom = frame['I3Geometry'].omgeo[i].position
             x_dom = np.array([position_dom.x , position_dom.y , position_dom.z])
             
-            R_square = np.dot(x_core-x_dom,x_core-x_dom)
-            delta_T = a * R_square + b * (1 - np.exp(-R_square/(2*(sigma**2.0))))
-            time_signal = time + (1/c) * np.dot(x_core-x_dom,n) + delta_T
+            Radius = np.dot(x_dom-x_core,x_dom-x_core)**0.5
+            unit_dom = (x_dom-x_core)/Radius
+            true_radius = np.dot(unit_dom-unit_core,x_dom-x_core)
+            time_signal = time - (1/c) * np.dot(x_core-x_dom,n) - t_cog
             
+            vec = []
+            vec_old = []
+            vec.append(true_radius)
+            vec_old.append(Radius)
+            radius[i] = np.array(vec)
+            radius_old[i] = np.array(vec_old)
+
             pulse.time = time_signal
             output_map[i].append(pulse)
 
@@ -229,13 +246,24 @@ class Get_data(I3Module):
             position_dom = frame['I3Geometry'].omgeo[i].position
             x_dom = np.array([position_dom.x , position_dom.y , position_dom.z])
 
-            R_square = np.dot(x_core-x_dom,x_core-x_dom)
-            delta_T = a * R_square + b * (1 - np.exp(-R_square/(2*(sigma**2.0))))
-            time_signal = time + (1/c) * np.dot(x_core-x_dom,n) + delta_T
+            Radius = np.dot(x_dom-x_core,x_dom-x_core)**0.5
+            unit_dom = (x_dom-x_core)/Radius
+            true_radius = np.dot(unit_dom-unit_core,x_dom-x_core)
+
+            time_signal = time - (1/c) * np.dot(x_core-x_dom,n) - t_cog
+            
+            vec = []
+            vec_old = []
+            vec.append(true_radius)
+            vec_old.append(Radius)
+            radius[i] = np.array(vec)
+            radius_old[i] = np.array(vec_old)
 
             pulse.time = time_signal
             output_map[i].append(pulse)
 
+        frame['All_radius'] = radius
+        frame['All_radius_old'] = radius_old
         frame['All_pulses'] = output_map
         self.PushFrame(frame)
 
@@ -249,9 +277,70 @@ tray = I3Tray()
 #                 Reader and whatnot
 #**************************************************
 
+tray.AddService("I3GulliverMinuitFactory","Minuit")(
+    ("MinuitPrintLevel",-2),
+    ("FlatnessCheck",True),
+    ("Algorithm","MIGRAD"),
+    ("MaxIterations",50000),
+    ("MinuitStrategy",2),
+    ("Tolerance",0.1),
+    )
+
+tray.AddService("I3CurvatureSeedServiceFactory","CurvSeed")(
+    ("SeedTrackName", "Laputop"), # This is also the default                                                                        
+    ("A", 6e-4),            # This comes from the original IT-26 gausspar function                                                  
+    ("N",9.9832),
+    ("D",63.5775)
+    )
+
+tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam")(
+    ("FreeA", True),
+    ("MinA", 0.0),
+    ("MaxA", 2e-3),
+    ("StepsizeA", 1e-5)
+    )
+
+tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam2")(
+    ("FreeN",True),
+    ("MinN",0),
+    ("MaxN",200.0),
+    ("StepsizeN",2.0)
+    )
+
+tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam3")(
+    ("FreeD",True),
+    ("MinD",0),
+    ("MaxD",500.0),
+    ("StepsizeD",2.0)
+    )
+
+#datareadoutName="IceTopHLCSeedRTPulses"
+datareadoutName = 'IceTopLaputopSeededSelectedHLC'
+badtanksName= "BadDomsList"
+
+tray.AddService("I3LaputopLikelihoodServiceFactory","ToprecLike2")(
+    ("datareadout", datareadoutName),
+    ("badtanks", badtanksName),
+    ("ldf", ""),      # do NOT do the LDF (charge) likelihood                                                                       
+    ("curvature","gaussparfree")      # yes, do the CURVATURE likelihood                                                            
+    )
+
 tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + file_list))
 
 tray.AddSegment(ExtractWaveforms, 'IceTop')
+
+tray.AddModule("I3LaputopFitter","CurvatureOnly")(
+    ("SeedService","CurvSeed"),
+    ("NSteps",3),                    # <--- tells it how many services to look for and perform                                      
+    ("Parametrization1","CurvParam"),
+    ("Parametrization2","CurvParam2"),
+    ("Parametrization3","CurvParam3"),
+    ("StoragePolicy","OnlyBestFit"),
+    ("Minimizer","Minuit"),
+    ("LogLikelihoodService","ToprecLike2"),     # the three likelihoods                                                             
+    ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood                                                          
+    ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood                             
+    )
                
 
 # Extract HLC pulses
@@ -299,8 +388,14 @@ tray.AddModule(I3TableWriter,'writer')(
              'IceTopSLCVEMPulses',
              'LaputopHLCPE',
              'LaputopSLCPE',
+             'Laputop',
              'LaputopParams',
-             'All_data'
+             'All_pulses',
+             'All_radius',
+             'All_radius_old',
+             'ShowerCOG',
+             'CurvatureOnly',
+             'CurvatureOnlyParams'
          ]),
     ("subeventstreams",['InIceSplit',"ice_top"])
 )
