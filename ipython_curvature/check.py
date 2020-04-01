@@ -1,6 +1,5 @@
 import pickle
 import numpy as np
-import matplotlib.pylab as plt
 import uproot
 from sklearn.metrics import confusion_matrix
 
@@ -23,8 +22,8 @@ def return_accuracy(predict1,predict2,validation):
     
     return cm[0][0]/np.sum(cm[0]),cm1[1][1]/np.sum(cm1[1]),np.array(mass_predict1),np.array(mass_predict4)
 
-file = uproot.open('/home/andy/12360.root')
-file2 = uproot.open('/home/andy/12362.root')
+file = uproot.open('/data/user/amedina/CosmicRay/Analysis/12632.root')
+file2 = uproot.open('/data/user/amedina/CosmicRay/Analysis/12633.root')
 
 cut_model = pickle.load((open('cut_model.sav','rb')))
 proton_model =  pickle.load((open('proton_best_model.sav','rb')))
