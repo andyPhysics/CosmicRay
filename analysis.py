@@ -12,7 +12,7 @@ load('stochastics')
 
 from icecube.icetray import I3Module
 from icecube.dataclasses import I3EventHeader, I3Particle
-from icecube.recclasses import I3LaputopParams
+from icecube.recclasses import I3LaputopParams, LaputopParameter
 from icecube.stochastics import *
 from icecube.tpx import *
 import multiprocessing as mp
@@ -98,6 +98,20 @@ class Process_Waveforms(I3Module):
         frame['LaputopSLCPE'] = PE_2
         self.PushFrame(frame)
 
+def function(u,m,s):
+    y = (1./(2.*np.pi)**0.5)*(1./(s)) * np.exp(-(u-m)**2.0/(2.*s**2.0))
+    return np.log(y)
+
+def chisquare_value(observed,true,ddof = 2):
+    chi2 = np.sum([((i-j)**2.0)/j for i,j in zip(abs(observed),abs(true))])
+    return chi2
+
+def mean_square(observed,true):
+    mse = [(i-j)**2.0 for i,j in zip(observed,true)]
+    return np.sum(mse)/len(mse)
+
+from scipy.optimize import curve_fit
+
 class Extract_info(I3Module):
     def __init__(self, context):
         I3Module.__init__(self, context)
@@ -107,12 +121,20 @@ class Extract_info(I3Module):
         
         for i in frame['LaputopHLCWaveforms'].keys():
             key = str(i)
-            waveform = frame['LaputopHLCWaveforms'][i][0].waveform
+            waveform = np.array(frame['LaputopHLCWaveforms'][i][0].waveform)
             time = frame['LaputopHLCWaveforms'][i][0].time
             binwidth = frame['LaputopHLCWaveforms'][i][0].binwidth
             
-            time_values = [i*binwidth + time for i in range(len(waveform))]
+            time_values = np.array([i*binwidth + time for i in range(len(waveform))])
             waveform_check = np.array(waveform) >= 0
+
+            check = np.array(waveform)>0
+            fit = curve_fit(function,np.log(time_values[check]),np.log(waveform[check]/np.sum(waveform[check])),bounds=((0,0),np.inf),maxfev=10000)
+            mse = mean_square(function(np.log(time_values[check]),fit[0][0],fit[0][1]),np.log(waveform[check]/np.sum(waveform[check])))
+            m = fit[0][0]
+            s = fit[0][1]
+            sigma_m = (fit[1][0][0])**0.5
+            sigma_s = (fit[1][1][1])**0.5
 
             CDF = []
             CDF_value = 0
@@ -163,6 +185,11 @@ class Extract_info(I3Module):
             OutputWaveformInfo[key]['Charge_PE'] = charge_pe
             OutputWaveformInfo[key]['90_slope'] = ninety_slope
             OutputWaveformInfo[key]['leading_edge'] = leading_edge
+            OutputWaveformInfo[key]['m'] = m
+            OutputWaveformInfo[key]['s'] = s
+            OutputWaveformInfo[key]['sigma_m'] = sigma_m
+            OutputWaveformInfo[key]['sigma_s'] = sigma_s
+            OutputWaveformInfo[key]['mse'] = mse
 
         frame['WaveformInfo'] = OutputWaveformInfo
         self.PushFrame(frame)
@@ -185,6 +212,8 @@ class Get_data(I3Module):
 
         output_map = dataclasses.I3RecoPulseSeriesMap()
         output_10 = dataclasses.I3RecoPulseSeriesMap()
+        output_50 = dataclasses.I3RecoPulseSeriesMap()
+        output_90 = dataclasses.I3RecoPulseSeriesMap()
 
         Laputop = frame['Laputop']
         x_core = np.array([Laputop.pos.x,Laputop.pos.y,Laputop.pos.z])
@@ -195,20 +224,17 @@ class Get_data(I3Module):
 
         radius = dataclasses.I3MapKeyVectorDouble()
         radius_old = dataclasses.I3MapKeyVectorDouble()
+        m = dataclasses.I3MapKeyVectorDouble()
+        s = dataclasses.I3MapKeyVectorDouble()
+        mse = dataclasses.I3MapKeyVectorDouble()
 
         for i in frame['LaputopSLCPE'].keys():
             output_map[i] = dataclasses.I3RecoPulseSeries()
-            output_10[i] = dataclasses.I3RecoPulseSeries()
 
             pulse = dataclasses.I3RecoPulse()
-            pulse2 = dataclasses.I3RecoPulse()
 
-            vec = []
-            vec_old = []
-            
             for j in frame['LaputopSLCPE'][i]:
                 pulse.charge = j.charge
-                pulse2.charge = j.charge
 
                 time = j.time
                 position_dom = frame['I3Geometry'].omgeo[i].position
@@ -219,28 +245,31 @@ class Get_data(I3Module):
                 true_radius = np.dot(unit_dom-unit_core,x_dom-x_core)
                 #time_signal = time - (1/c) * np.dot(x_core-x_dom,n) - t_cog
                 time_signal = time
-                vec.append(true_radius)
-                vec_old.append(Radius)
                 pulse.time = time_signal
-                pulse2.time = time_signal
-                output_map[i].append(pulse)
-                output_10[i].append(pulse2)
 
-            radius[i] = np.array(vec)
-            radius_old[i] = np.array(vec_old)
+                output_map[i].append(pulse)
 
         for i in frame['LaputopHLCPE'].keys():
             output_map[i] = dataclasses.I3RecoPulseSeries()
             output_10[i] = dataclasses.I3RecoPulseSeries()
+            output_50[i] = dataclasses.I3RecoPulseSeries()
+            output_90[i] = dataclasses.I3RecoPulseSeries()
 
             pulse = dataclasses.I3RecoPulse()
             pulse2 = dataclasses.I3RecoPulse()
-            
+            pulse3 = dataclasses.I3RecoPulse()
+            pulse4 = dataclasses.I3RecoPulse()
+
             vec = []
             vec_old = []
+            vec_m = []
+            vec_s = []
+            vec_mse = []
             for j in frame['LaputopHLCPE'][i]:
                 pulse.charge = j.charge
                 pulse2.charge = j.charge
+                pulse3.charge = j.charge
+                pulse4.charge = j.charge
                 time = j.time
                 position_dom = frame['I3Geometry'].omgeo[i].position
                 x_dom = np.array([position_dom.x , position_dom.y , position_dom.z])
@@ -256,19 +285,39 @@ class Get_data(I3Module):
                 vec_old.append(Radius)
                 pulse.time = time_signal
                 key = str(i)
-                pulse2.time = frame['WaveformInfo'][key]['Time_50'] - frame['WaveformInfo'][key]['Time_10'] + (1/c) * np.dot(x_core-x_dom,n) + t_cog  
+                A = frame['CurvatureOnlyParams'].value(LaputopParameter.CurvParabA)
+                N = frame['CurvatureOnlyParams'].value(LaputopParameter.CurvGaussN)
+                D = frame['CurvatureOnlyParams'].value(LaputopParameter.CurvGaussD)
+                delta_t = A * Radius**2.0 + N * (1-np.exp(-Radius**2.0/(2*(D**2.0))))
+                pulse2.time = frame['WaveformInfo'][key]['Time_50'] - (1/c) * np.dot(x_core-x_dom,n) - delta_t
+                pulse3.time = frame['WaveformInfo'][key]['Time_10'] - (1/c) * np.dot(x_core-x_dom,n) - delta_t
+                pulse4.time = frame['WaveformInfo'][key]['Time_90'] - (1/c) * np.dot(x_core-x_dom,n) - delta_t
+                vec_m .append(frame['WaveformInfo'][key]['m'])
+                vec_s.append(frame['WaveformInfo'][key]['s'])
+                vec_mse.append(frame['WaveformInfo'][key]['mse'])
 
                 output_map[i].append(pulse)
-                output_10[i].append(pulse2)
+                output_50[i].append(pulse2)
+                output_10[i].append(pulse3)
+                output_90[i].append(pulse4)
 
             radius[i] = np.array(vec)
             radius_old[i] = np.array(vec_old)
+            m[i] = np.array(vec_m)
+            s[i] = np.array(vec_s)
+            mse[i] = np.array(vec_mse)
 
         frame['All_radius'] = radius
         frame['All_radius_old'] = radius_old
         frame['All_pulses'] = output_map
         frame['All_10'] = output_10
+        frame['All_50'] = output_50
+        frame['All_90'] = output_90
+        frame['m'] = m
+        frame['s'] = s
+        frame['mse'] = mse
         self.PushFrame(frame)
+
 
 tray = I3Tray()
 
@@ -317,7 +366,7 @@ tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam3")(
     ("StepsizeD",2.0)
     )
 
-datareadoutName = 'All_pulses'
+datareadoutName = 'IceTopLaputopSeededSelectedHLC'
 badtanksName= "BadDomsList"
 
 tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + file_list))
@@ -345,8 +394,6 @@ tray.AddModule(Process_Waveforms,'Process_wavefomrs')
 
 tray.AddModule(Extract_info)
 
-tray.AddModule(Get_data)
-
 tray.AddService("I3LaputopLikelihoodServiceFactory","ToprecLike2")(
     ("datareadout", datareadoutName),
     ("badtanks", badtanksName),
@@ -367,6 +414,8 @@ tray.AddModule("I3LaputopFitter","CurvatureOnly")(
     ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood                                                              
     ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood                                 
     )
+
+tray.AddModule(Get_data)
 
 tray.AddModule("I3Writer","EventWriter")(
     ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
@@ -402,9 +451,15 @@ wanted_general = ['I3EventHeader',
                   'All_pulses',
                   'All_radius',
                   'All_radius_old',
+                  'All_10',
+                  'All_50',
+                  'All_90',
                   'ShowerCOG',
                   'CurvatureOnly',
-                  'CurvatureOnlyParams'
+                  'CurvatureOnlyParams',
+                  'm',
+                  's',
+                  'rmse'
               ]
 
 
