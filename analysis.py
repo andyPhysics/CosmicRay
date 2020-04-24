@@ -15,7 +15,7 @@ from icecube.dataclasses import I3EventHeader, I3Particle
 from icecube.recclasses import I3LaputopParams, LaputopParameter
 from icecube.stochastics import *
 from icecube.tpx import *
-import multiprocessing as mp
+from multiprocessing.pool import ThreadPool as Pool
 
 ## Are you using tableio?
 from icecube.tableio import I3TableWriter
@@ -98,17 +98,13 @@ class Process_Waveforms(I3Module):
         frame['LaputopSLCPE'] = PE_2
         self.PushFrame(frame)
 
-def function(u,m,s):
-    y = (1./(2.*np.pi)**0.5)*(1./(s)) * np.exp(-(u-m)**2.0/(2.*s**2.0))
+def function(t,m,s,t_0):
+    y = (1/(2.*np.pi)**0.5) * (1./s*(t-t_0)) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
     return np.log(y)
 
-def chisquare_value(observed,true,ddof = 2):
-    chi2 = np.sum([((i-j)**2.0)/j for i,j in zip(abs(observed),abs(true))])
-    return chi2
-
-def mean_square(observed,true):
-    mse = [(i-j)**2.0 for i,j in zip(observed,true)]
-    return np.sum(mse)/len(mse)
+def chisquare_value(observed,true,ddof = 3):
+    chi2 = np.sum([((i-j)**2.0)/abs(j) for i,j in zip(observed,true)])
+    return chi2/(len(observed)-ddof)
 
 from scipy.optimize import curve_fit
 
@@ -128,14 +124,6 @@ class Extract_info(I3Module):
             time_values = np.array([i*binwidth + time for i in range(len(waveform))])
             waveform_check = np.array(waveform) >= 0
 
-            check = np.array(waveform)>0
-            fit = curve_fit(function,np.log(time_values[check]),np.log(waveform[check]/np.sum(waveform[check])),bounds=((0,0),np.inf),maxfev=10000)
-            mse = mean_square(function(np.log(time_values[check]),fit[0][0],fit[0][1]),np.log(waveform[check]/np.sum(waveform[check])))
-            m = fit[0][0]
-            s = fit[0][1]
-            sigma_m = (fit[1][0][0])**0.5
-            sigma_s = (fit[1][1][1])**0.5
-
             CDF = []
             CDF_value = 0
             for j in range(len(waveform)):
@@ -154,7 +142,9 @@ class Extract_info(I3Module):
 
 
             Amplitude = 0
+            count = 0
             for k in waveform:
+                count+=1
                 if k-Amplitude >= 0:
                     Amplitude = k
                 else:
@@ -172,7 +162,41 @@ class Extract_info(I3Module):
             leading_edge = time + (bin_10 - CDF[bin_10]/ninety_slope)*binwidth
             if ninety_slope <= 0 or not np.isfinite(ninety_slope) or not (leading_edge >= time + tmin):
                 leading_edge = time + tmin
-                                                            
+
+            trailing_edge = frame['IceTopHLCPulseInfo'][i][0].trailingEdge
+
+            peak_time = time_values[count]
+
+            check_time = time_values <= peak_time+400
+            check_time2 = time_values >= leading_edge
+            check = np.array(waveform)>0
+
+            check = [(i and j) and k for i,j,k in zip(check_time,check_time2,check)]
+
+            try:
+                fit = curve_fit(function,time_values[check],np.log(waveform[check]/np.sum(waveform[check])),bounds=((-np.inf,0,0),np.inf),p0=[1,1,time],maxfev=10000,xtol=1e-8,ftol=1e-9)
+                fit_status = True
+            except:
+                fit_status = False
+            
+            if fit_status:
+                chi2 = chisquare_value(function(time_values[check],fit[0][0],fit[0][1],fit[0][2]),np.log(waveform[check]/np.sum(waveform[check])))
+                m = fit[0][0]
+                s = fit[0][1]
+                t_0 = fit[0][2]
+                
+                sigma_m = (fit[1][0][0])**0.5
+                sigma_s = (fit[1][1][1])**0.5
+                sigma_t = (fit[1][2][2])**0.5
+            else:
+                chi2 = 0
+                m = 0
+                s = 0
+                t_0 = 0
+                sigma_m = 0
+                sigma_s = 0
+                sigma_t = 0
+
 
             OutputWaveformInfo[key] = dataclasses.I3MapStringDouble()
             OutputWaveformInfo[key]['StartTime'] = time
@@ -187,9 +211,11 @@ class Extract_info(I3Module):
             OutputWaveformInfo[key]['leading_edge'] = leading_edge
             OutputWaveformInfo[key]['m'] = m
             OutputWaveformInfo[key]['s'] = s
+            OutputWaveformInfo[key]['t_0'] = t_0
             OutputWaveformInfo[key]['sigma_m'] = sigma_m
             OutputWaveformInfo[key]['sigma_s'] = sigma_s
-            OutputWaveformInfo[key]['mse'] = mse
+            OutputWaveformInfo[key]['sigma_t'] = sigma_t
+            OutputWaveformInfo[key]['chi2'] = chi2
 
         frame['WaveformInfo'] = OutputWaveformInfo
         self.PushFrame(frame)
@@ -226,7 +252,11 @@ class Get_data(I3Module):
         radius_old = dataclasses.I3MapKeyVectorDouble()
         m = dataclasses.I3MapKeyVectorDouble()
         s = dataclasses.I3MapKeyVectorDouble()
-        mse = dataclasses.I3MapKeyVectorDouble()
+        t0 = dataclasses.I3MapKeyVectorDouble()
+        chi2 = dataclasses.I3MapKeyVectorDouble()
+        sigma_m = dataclasses.I3MapKeyVectorDouble()
+        sigma_s = dataclasses.I3MapKeyVectorDouble()
+        sigma_t0 = dataclasses.I3MapKeyVectorDouble()
 
         for i in frame['LaputopSLCPE'].keys():
             output_map[i] = dataclasses.I3RecoPulseSeries()
@@ -264,7 +294,11 @@ class Get_data(I3Module):
             vec_old = []
             vec_m = []
             vec_s = []
-            vec_mse = []
+            vec_chi2 = []
+            vec_t0 = []
+            vec_sigma_m = []
+            vec_sigma_s = []
+            vec_sigma_t = []
             for j in frame['LaputopHLCPE'][i]:
                 pulse.charge = j.charge
                 pulse2.charge = j.charge
@@ -294,7 +328,11 @@ class Get_data(I3Module):
                 pulse4.time = frame['WaveformInfo'][key]['Time_90'] - (1/c) * np.dot(x_core-x_dom,n) - delta_t
                 vec_m .append(frame['WaveformInfo'][key]['m'])
                 vec_s.append(frame['WaveformInfo'][key]['s'])
-                vec_mse.append(frame['WaveformInfo'][key]['mse'])
+                vec_chi2.append(frame['WaveformInfo'][key]['chi2'])
+                vec_t0.append(frame['WaveformInfo'][key]['t_0'])
+                vec_sigma_m.append(frame['WaveformInfo'][key]['sigma_m'])
+                vec_sigma_s.append(frame['WaveformInfo'][key]['sigma_s'])
+                vec_sigma_t.append(frame['WaveformInfo'][key]['sigma_t'])
 
                 output_map[i].append(pulse)
                 output_50[i].append(pulse2)
@@ -305,7 +343,11 @@ class Get_data(I3Module):
             radius_old[i] = np.array(vec_old)
             m[i] = np.array(vec_m)
             s[i] = np.array(vec_s)
-            mse[i] = np.array(vec_mse)
+            chi2[i] = np.array(vec_chi2)
+            t0[i] = np.array(vec_t0)
+            sigma_m[i] = np.array(vec_sigma_m)
+            sigma_s[i] = np.array(vec_sigma_s)
+            sigma_t0[i] = np.array(vec_sigma_t)
 
         frame['All_radius'] = radius
         frame['All_radius_old'] = radius_old
@@ -315,7 +357,11 @@ class Get_data(I3Module):
         frame['All_90'] = output_90
         frame['m'] = m
         frame['s'] = s
-        frame['mse'] = mse
+        frame['chi2'] = chi2
+        frame['t0'] = t0
+        frame['sigma_m'] = sigma_m
+        frame['sigma_s'] = sigma_s
+        frame['sigma_t0'] = sigma_t0
         self.PushFrame(frame)
 
 
@@ -459,7 +505,11 @@ wanted_general = ['I3EventHeader',
                   'CurvatureOnlyParams',
                   'm',
                   's',
-                  'rmse'
+                  'chi2',
+                  't0',
+                  'sigma_m',
+                  'sigma_s',
+                  'sigma_t0'
               ]
 
 
