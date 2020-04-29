@@ -15,7 +15,7 @@ from icecube.dataclasses import I3EventHeader, I3Particle
 from icecube.recclasses import I3LaputopParams, LaputopParameter
 from icecube.stochastics import *
 from icecube.tpx import *
-from multiprocessing.pool import ThreadPool as Pool
+import multiprocessing as mp
 
 ## Are you using tableio?
 from icecube.tableio import I3TableWriter
@@ -46,9 +46,6 @@ file_list = []
 for i in directory_list:
     file_list.append(directory+i)
 
-I3_OUTFILE = output_directory + data_set_number + '.i3.bz2' 
-ROOTFILE = output_directory + data_set_number + '.root'
-    
 #### PUT YOUR FAVORITE GCD AND INPUT FILE HERE
 
 GCDFile = '/data/sim/IceTop/2012/filtered/CORSIKA-ice-top/%s/level2/0000000-0000999/GeoCalibDetectorStatus_2012.56063_V1_OctSnow.i3.gz'%(data_set_number)
@@ -174,7 +171,7 @@ class Extract_info(I3Module):
             check = [(i and j) and k for i,j,k in zip(check_time,check_time2,check)]
 
             try:
-                fit = curve_fit(function,time_values[check],np.log(waveform[check]/np.sum(waveform[check])),bounds=((-np.inf,0,0),np.inf),p0=[1,1,time],maxfev=10000,xtol=1e-8,ftol=1e-9)
+                fit = curve_fit(function,time_values[check],np.log(waveform[check]/np.sum(waveform[check])),bounds=((-np.inf,0,0),np.inf),p0 = [1,1,time],maxfev=10000)
                 fit_status = True
             except:
                 fit_status = False
@@ -196,7 +193,6 @@ class Extract_info(I3Module):
                 sigma_m = 0
                 sigma_s = 0
                 sigma_t = 0
-
 
             OutputWaveformInfo[key] = dataclasses.I3MapStringDouble()
             OutputWaveformInfo[key]['StartTime'] = time
@@ -365,166 +361,174 @@ class Get_data(I3Module):
         self.PushFrame(frame)
 
 
-tray = I3Tray()
+file_list = np.array_split(file_list,5)
 
-########## SERVICES FOR GULLIVER ##########
+def function2(i):
+    I3_OUTFILE = output_directory + data_set_number + '_%s'%(i) + '.i3.bz2'
+    ROOTFILE = output_directory + data_set_number + '_%s'%(i) + '.root'
 
-#------------------- LET'S RUN SOME MODULES!  ------------------
+    tray = I3Tray()
 
-#**************************************************
-#                 Reader and whatnot
-#**************************************************
+    ########## SERVICES FOR GULLIVER ##########
 
-tray.AddService("I3GulliverMinuitFactory","Minuit")(
-    ("MinuitPrintLevel",-2),
-    ("FlatnessCheck",True),
-    ("Algorithm","MIGRAD"),
-    ("MaxIterations",50000),
-    ("MinuitStrategy",2),
-    ("Tolerance",0.1),
+    #------------------- LET'S RUN SOME MODULES!  ------------------
+
+    #**************************************************
+    #                 Reader and whatnot
+    #**************************************************
+
+    tray.AddService("I3GulliverMinuitFactory","Minuit")(
+        ("MinuitPrintLevel",-2),
+        ("FlatnessCheck",True),
+        ("Algorithm","MIGRAD"),
+        ("MaxIterations",50000),
+        ("MinuitStrategy",2),
+        ("Tolerance",0.1),
     )
 
-tray.AddService("I3CurvatureSeedServiceFactory","CurvSeed")(
-    ("SeedTrackName", "Laputop"), # This is also the default                                                                        
-    ("A", 6e-4),            # This comes from the original IT-26 gausspar function                                                  
-    ("N",9.9832),
-    ("D",63.5775)
+    tray.AddService("I3CurvatureSeedServiceFactory","CurvSeed")(
+        ("SeedTrackName", "Laputop"), # This is also the default                                                                        
+        ("A", 6e-4),            # This comes from the original IT-26 gausspar function                                                  
+        ("N",9.9832),
+        ("D",63.5775)
+    )
+    
+    tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam")(
+        ("FreeA", True),
+        ("MinA", 0.0),
+        ("MaxA", 2e-3),
+        ("StepsizeA", 1e-5)
+    )
+    
+    tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam2")(
+        ("FreeN",True),
+        ("MinN",0),
+        ("MaxN",200.0),
+        ("StepsizeN",2.0)
+    )
+    
+    tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam3")(
+        ("FreeD",True),
+        ("MinD",0),
+        ("MaxD",500.0),
+        ("StepsizeD",2.0)
+    )
+    
+    datareadoutName = 'IceTopLaputopSeededSelectedHLC'
+    badtanksName= "BadDomsList"
+    
+    tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + list(file_list[i])))
+    
+    tray.AddSegment(ExtractWaveforms, 'IceTop')
+    
+    # Extract HLC pulses
+    tray.AddModule('I3TopHLCPulseExtractor', 'TopHLCPulseExtractor',
+                   PEPulses  = 'IceTopHLCPEPulses',         # Pulses in PE, set to empty string to disable output
+                   PulseInfo = 'IceTopHLCPulseInfo',        # PulseInfo: amplitude, rise time, etc. Empty string to disable
+                   VEMPulses = 'IceTopHLCVEMPulses',        # Pulses in VEM, set to empty string to disable
+                   Waveforms = 'CalibratedHLCWaveforms',   # Input HLC waveforms from WaveCalibrator
+                   BadDomList = "BadDomsList"
+               )
+    
+    # Extract SLC pulses
+    tray.AddModule('I3TopSLCPulseExtractor', 'TopSLCPulseExtractor',
+                   PEPulses  = 'IceTopSLCPEPulses',         # (see above ...)
+                   VEMPulses = 'IceTopSLCVEMPulses',
+                   Waveforms = 'CalibratedSLCWaveforms',   # Input SLC waveforms from WaveCalibrator
+                   BadDomList = "BadDomsListSLC"
+               )
+    
+    tray.AddModule(Process_Waveforms,'Process_wavefomrs')
+    
+    tray.AddModule(Extract_info)
+    
+    tray.AddService("I3LaputopLikelihoodServiceFactory","ToprecLike2")(
+        ("datareadout", datareadoutName),
+        ("badtanks", badtanksName),
+        ("ldf", ""),      # do NOT do the LDF (charge) likelihood                                                                          
+        ("curvature","gaussparfree")      # yes, do the CURVATURE likelihood                                                               
+    )
+    
+    
+    tray.AddModule("I3LaputopFitter","CurvatureOnly")(
+        ("SeedService","CurvSeed"),
+        ("NSteps",3),                    # <--- tells it how many services to look for and perform                                          
+        ("Parametrization1","CurvParam"),
+        ("Parametrization2","CurvParam2"),
+        ("Parametrization3","CurvParam3"),
+        ("StoragePolicy","OnlyBestFit"),
+        ("Minimizer","Minuit"),
+        ("LogLikelihoodService","ToprecLike2"),     # the three likelihoods                                                                 
+        ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood                                                              
+        ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood                                 
     )
 
-tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam")(
-    ("FreeA", True),
-    ("MinA", 0.0),
-    ("MaxA", 2e-3),
-    ("StepsizeA", 1e-5)
+    tray.AddModule(Get_data)
+
+    tray.AddModule("I3Writer","EventWriter")(
+        ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
+        ("Filename",I3_OUTFILE),
     )
 
-tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam2")(
-    ("FreeN",True),
-    ("MinN",0),
-    ("MaxN",200.0),
-    ("StepsizeN",2.0)
+    wanted_inice_reco=["Millipede",
+                       "MillipedeFitParams",
+                       "Millipede_dEdX",
+                       "Stoch_Reco",
+                       "Stoch_Reco2",
+                       "I3MuonEnergyLaputopCascadeParams",
+                       "I3MuonEnergyLaputopParams"
+    ]
+
+    wanted_inice_cuts=['IT73AnalysisInIceQualityCuts']
+
+    wanted_general = ['I3EventHeader',
+                      'CalibratedHLCWaveforms',
+                      'CalibratedSLCWaveforms',
+                      'MCPrimary',
+                      'MCPrimaryInfo',
+                      'LaputopHLCWaveforms',
+                      'IceTopHLCPEPulses',
+                      'IceTopHLCPulseInfo',
+                      'IceTopHLCVEMPulses',
+                      'IceTopSLCPEPulses',
+                      'IceTopSLCVEMPulses',
+                      'LaputopHLCPE',
+                      'LaputopSLCPE',
+                      'Laputop',
+                      'LaputopParams',
+                      'All_pulses',
+                      'All_radius',
+                      'All_radius_old',
+                      'All_10',
+                      'All_50',
+                      'All_90',
+                      'ShowerCOG',
+                      'CurvatureOnly',
+                      'CurvatureOnlyParams',
+                      'm',
+                      's',
+                      'chi2',
+                      't0',
+                      'sigma_m',
+                      'sigma_s',
+                      'sigma_t0'
+                  ]
+
+
+    ## Output root file
+    root = I3ROOTTableService(ROOTFILE,"aTree")
+    tray.AddModule(I3TableWriter,'writer')(
+        ("tableservice", root),
+        ("keys",wanted_general+wanted_inice_reco+wanted_inice_cuts),
+        ("subeventstreams",['InIceSplit',"ice_top"])
     )
-
-tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam3")(
-    ("FreeD",True),
-    ("MinD",0),
-    ("MaxD",500.0),
-    ("StepsizeD",2.0)
-    )
-
-datareadoutName = 'IceTopLaputopSeededSelectedHLC'
-badtanksName= "BadDomsList"
-
-tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + file_list))
-
-tray.AddSegment(ExtractWaveforms, 'IceTop')
-
-# Extract HLC pulses
-tray.AddModule('I3TopHLCPulseExtractor', 'TopHLCPulseExtractor',
-               PEPulses  = 'IceTopHLCPEPulses',         # Pulses in PE, set to empty string to disable output
-               PulseInfo = 'IceTopHLCPulseInfo',        # PulseInfo: amplitude, rise time, etc. Empty string to disable
-               VEMPulses = 'IceTopHLCVEMPulses',        # Pulses in VEM, set to empty string to disable
-               Waveforms = 'CalibratedHLCWaveforms',   # Input HLC waveforms from WaveCalibrator
-               BadDomList = "BadDomsList"
-)
-
-# Extract SLC pulses
-tray.AddModule('I3TopSLCPulseExtractor', 'TopSLCPulseExtractor',
-               PEPulses  = 'IceTopSLCPEPulses',         # (see above ...)
-               VEMPulses = 'IceTopSLCVEMPulses',
-               Waveforms = 'CalibratedSLCWaveforms',   # Input SLC waveforms from WaveCalibrator
-               BadDomList = "BadDomsListSLC"
-)
-
-tray.AddModule(Process_Waveforms,'Process_wavefomrs')
-
-tray.AddModule(Extract_info)
-
-tray.AddService("I3LaputopLikelihoodServiceFactory","ToprecLike2")(
-    ("datareadout", datareadoutName),
-    ("badtanks", badtanksName),
-    ("ldf", ""),      # do NOT do the LDF (charge) likelihood                                                                          
-    ("curvature","gaussparfree")      # yes, do the CURVATURE likelihood                                                               
-    )
-
-
-tray.AddModule("I3LaputopFitter","CurvatureOnly")(
-    ("SeedService","CurvSeed"),
-    ("NSteps",3),                    # <--- tells it how many services to look for and perform                                          
-    ("Parametrization1","CurvParam"),
-    ("Parametrization2","CurvParam2"),
-    ("Parametrization3","CurvParam3"),
-    ("StoragePolicy","OnlyBestFit"),
-    ("Minimizer","Minuit"),
-    ("LogLikelihoodService","ToprecLike2"),     # the three likelihoods                                                                 
-    ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood                                                              
-    ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood                                 
-    )
-
-tray.AddModule(Get_data)
-
-tray.AddModule("I3Writer","EventWriter")(
-    ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
-    ("Filename",I3_OUTFILE),
-)
-
-wanted_inice_reco=["Millipede",
-                           "MillipedeFitParams",
-                           "Millipede_dEdX",
-                           "Stoch_Reco",
-                           "Stoch_Reco2",
-                           "I3MuonEnergyLaputopCascadeParams",
-                           "I3MuonEnergyLaputopParams"
-                           ]
-
-wanted_inice_cuts=['IT73AnalysisInIceQualityCuts']
-
-wanted_general = ['I3EventHeader',
-                  'CalibratedHLCWaveforms',
-                  'CalibratedSLCWaveforms',
-                  'MCPrimary',
-                  'MCPrimaryInfo',
-                  'LaputopHLCWaveforms',
-                  'IceTopHLCPEPulses',
-                  'IceTopHLCPulseInfo',
-                  'IceTopHLCVEMPulses',
-                  'IceTopSLCPEPulses',
-                  'IceTopSLCVEMPulses',
-                  'LaputopHLCPE',
-                  'LaputopSLCPE',
-                  'Laputop',
-                  'LaputopParams',
-                  'All_pulses',
-                  'All_radius',
-                  'All_radius_old',
-                  'All_10',
-                  'All_50',
-                  'All_90',
-                  'ShowerCOG',
-                  'CurvatureOnly',
-                  'CurvatureOnlyParams',
-                  'm',
-                  's',
-                  'chi2',
-                  't0',
-                  'sigma_m',
-                  'sigma_s',
-                  'sigma_t0'
-              ]
-
-
-## Output root file
-root = I3ROOTTableService(ROOTFILE,"aTree")
-tray.AddModule(I3TableWriter,'writer')(
-    ("tableservice", root),
-    ("keys",wanted_general+wanted_inice_reco+wanted_inice_cuts),
-    ("subeventstreams",['InIceSplit',"ice_top"])
-)
 
 
 
    
-# Execute the Tray
-# Just to make sure it's working!
-tray.Execute()
+    # Execute the Tray
+    # Just to make sure it's working!
+    tray.Execute()
 
+pool = mp.Pool(5)
+pool.map(function2,range(len(file_list)))
