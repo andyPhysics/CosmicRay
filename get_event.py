@@ -26,7 +26,7 @@ count = 0
 
 while l3_file.more():
     frame = l3_file.pop_physics()
-    if (count > 5) & (np.log10(frame['MCPrimary'].energy) > 7):
+    if (count > 100) & (np.log10(frame['MCPrimary'].energy) > 7):
         break
 
     eventinfo = {}
@@ -46,7 +46,12 @@ while l3_file.more():
         eventinfo[omkey]['m'] = frame['WaveformInfo'][omkey]['m']
         eventinfo[omkey]['s'] = frame['WaveformInfo'][omkey]['s']
         eventinfo[omkey]['t0'] = frame['WaveformInfo'][omkey]['t_0']
-        eventinfo[omkey]['charge_pe'] = frame['WaveformInfo'][omkey]['Charge_PE']
+        eventinfo[omkey]['chargePe'] = frame['WaveformInfo'][omkey]['Charge_PE']
+        eventinfo[omkey]['chi2'] = frame['WaveformInfo'][omkey]['chi2']
+        eventinfo[omkey]['sigmat0'] = frame['WaveformInfo'][omkey]['sigma_t']
+        eventinfo[omkey]['sigmam'] = frame['WaveformInfo'][omkey]['sigma_s']
+        eventinfo[omkey]['sigmas'] = frame['WaveformInfo'][omkey]['sigma_m']
+
 
     event['event_%s'%(count)] = eventinfo
         
