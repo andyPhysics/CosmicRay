@@ -26,8 +26,10 @@ count = 0
 
 while l3_file.more():
     frame = l3_file.pop_physics()
-    if (count > 100) & (np.log10(frame['MCPrimary'].energy) > 7):
+    if (count > 100):
         break
+    elif (np.log10(frame['MCPrimary'].energy) < 7):
+        continue
 
     eventinfo = {}
     for omkey in frame['WaveformInfo'].keys():
