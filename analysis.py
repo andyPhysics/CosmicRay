@@ -79,20 +79,20 @@ class Process_Waveforms(I3Module):
         I3Module.__init__(self, context)
 
     def Physics(self, frame):
-        PE = frame['IceTopLaputopSeededSelectedHLC'].apply(frame)
-        PE_2 = frame['IceTopLaputopSeededSelectedSLC'].apply(frame)
+        VEM = frame['IceTopLaputopSeededSelectedHLC'].apply(frame)
+        VEM_2 = frame['IceTopLaputopSeededSelectedSLC'].apply(frame)
 
         waveforms = frame['CalibratedHLCWaveforms']
 
         HLCWaveforms = dataclasses.I3WaveformSeriesMap()
 
-        for i in PE.keys():
+        for i in VEM.keys():
             HLCWaveforms[i] = waveforms[i]
             
 
         frame['LaputopHLCWaveforms'] = HLCWaveforms
-        frame['LaputopHLCPE'] = PE
-        frame['LaputopSLCPE'] = PE_2
+        frame['LaputopHLCVEM'] = VEM
+        frame['LaputopSLCVEM'] = VEM_2
         self.PushFrame(frame)
 
 def function(t,m,s,t_0):
@@ -254,12 +254,12 @@ class Get_data(I3Module):
         sigma_s = dataclasses.I3MapKeyVectorDouble()
         sigma_t0 = dataclasses.I3MapKeyVectorDouble()
 
-        for i in frame['LaputopSLCPE'].keys():
+        for i in frame['LaputopSLCVEM'].keys():
             output_map[i] = dataclasses.I3RecoPulseSeries()
 
             pulse = dataclasses.I3RecoPulse()
 
-            for j in frame['LaputopSLCPE'][i]:
+            for j in frame['LaputopSLCVEM'][i]:
                 pulse.charge = j.charge
 
                 time = j.time
@@ -275,7 +275,7 @@ class Get_data(I3Module):
 
                 output_map[i].append(pulse)
 
-        for i in frame['LaputopHLCPE'].keys():
+        for i in frame['LaputopHLCVEM'].keys():
             output_map[i] = dataclasses.I3RecoPulseSeries()
             output_10[i] = dataclasses.I3RecoPulseSeries()
             output_50[i] = dataclasses.I3RecoPulseSeries()
@@ -295,7 +295,7 @@ class Get_data(I3Module):
             vec_sigma_m = []
             vec_sigma_s = []
             vec_sigma_t = []
-            for j in frame['LaputopHLCPE'][i]:
+            for j in frame['LaputopHLCVEM'][i]:
                 pulse.charge = j.charge
                 pulse2.charge = j.charge
                 pulse3.charge = j.charge
@@ -492,8 +492,8 @@ def function2(i):
                       'IceTopHLCVEMPulses',
                       'IceTopSLCPEPulses',
                       'IceTopSLCVEMPulses',
-                      'LaputopHLCPE',
-                      'LaputopSLCPE',
+                      'LaputopHLCVEM',
+                      'LaputopSLCVEM',
                       'Laputop',
                       'LaputopParams',
                       'All_pulses',

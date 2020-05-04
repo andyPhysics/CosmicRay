@@ -50,7 +50,7 @@ while l3_file.more():
         eventinfo[omkey]['t0'] = frame['WaveformInfo'][omkey]['t_0']
         eventinfo[omkey]['charge'] = frame['WaveformInfo'][omkey]['Charge']
         eventinfo[omkey]['chargePe'] = frame['WaveformInfo'][omkey]['Charge_PE']
-        eventinfo[omkey]['chargeVEM'] = frame['LaputopHLCPE'][OMKey(string,dom)][0].charge
+        eventinfo[omkey]['chargeVEM'] = frame['LaputopHLCVEM'][OMKey(string,dom)][0].charge
         eventinfo[omkey]['chi2'] = frame['WaveformInfo'][omkey]['chi2']
         eventinfo[omkey]['sigmat0'] = frame['WaveformInfo'][omkey]['sigma_t']
         eventinfo[omkey]['sigmam'] = frame['WaveformInfo'][omkey]['sigma_s']
