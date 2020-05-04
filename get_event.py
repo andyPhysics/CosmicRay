@@ -48,11 +48,16 @@ while l3_file.more():
         eventinfo[omkey]['m'] = frame['WaveformInfo'][omkey]['m']
         eventinfo[omkey]['s'] = frame['WaveformInfo'][omkey]['s']
         eventinfo[omkey]['t0'] = frame['WaveformInfo'][omkey]['t_0']
+        eventinfo[omkey]['charge'] = frame['WaveformInfo'][omkey]['Charge_PE']
         eventinfo[omkey]['chargePe'] = frame['WaveformInfo'][omkey]['Charge_PE']
         eventinfo[omkey]['chi2'] = frame['WaveformInfo'][omkey]['chi2']
         eventinfo[omkey]['sigmat0'] = frame['WaveformInfo'][omkey]['sigma_t']
         eventinfo[omkey]['sigmam'] = frame['WaveformInfo'][omkey]['sigma_s']
         eventinfo[omkey]['sigmas'] = frame['WaveformInfo'][omkey]['sigma_m']
+        fe_impedance = frame['I3Calibration'].dom_cal[OMKey(string,dom)].front_end_impedance
+        spe_mean = dataclasses.spe_mean(frame['I3DetectorStatus'].dom_status[OMKey(string,dom)],frame['I3Calibration'].dom_cal[OMKey(string,dom)])
+        eventinfo[omkey]['feimpedance'] = fe_impedance
+        eventinfo[omkey]['spemean'] = spe_mean
 
 
     event['event_%s'%(count)] = eventinfo
