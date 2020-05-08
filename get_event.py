@@ -59,6 +59,8 @@ while l3_file.more():
         spe_mean = dataclasses.spe_mean(frame['I3DetectorStatus'].dom_status[OMKey(string,dom)],frame['I3Calibration'].dom_cal[OMKey(string,dom)])
         eventinfo[omkey]['feimpedance'] = fe_impedance
         eventinfo[omkey]['spemean'] = spe_mean
+        pe_per_vem = frame['I3Calibration'].vem_cal[OMKey(string,dom)]
+        eventinfo[omkey]['pe_per_vem'] = pe_per_vem.pe_per_vem/pe_per_vem.corr_factor
 
 
     event['event_%s'%(count)] = eventinfo
