@@ -96,7 +96,7 @@ class Process_Waveforms(I3Module):
         self.PushFrame(frame)
 
 def function(t,m,s,t_0):
-    y = (1/(2.*np.pi)**0.5) * (1./s*(t-t_0)) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
+    y = (1/(2.*np.pi)**0.5) * (1./(s*(t-t_0))) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
     return np.log(y)
 
 def chisquare_value(observed,true,ddof = 3):
