@@ -53,7 +53,8 @@ while l3_file.more():
         eventinfo[omkey]['y'] = position.y
         eventinfo[omkey]['z'] = position.z
         eventinfo[omkey]['ShowerCOG_x'] = frame['ShowerCOG'].pos.x
-        eventinfo[omkey]['ShowCOG_y'] = frame['ShowerCOG'].pos.y
+        eventinfo[omkey]['ShowerCOG_y'] = frame['ShowerCOG'].pos.y
+        eventinfo[omkey]['ShowerCOG_time'] = frame['ShowerCOG'].time
         eventinfo[omkey]['m'] = frame['WaveformInfo'][omkey]['m']
         eventinfo[omkey]['s'] = frame['WaveformInfo'][omkey]['s']
         eventinfo[omkey]['t0'] = frame['WaveformInfo'][omkey]['t_0']
