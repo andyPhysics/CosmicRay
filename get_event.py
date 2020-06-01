@@ -26,9 +26,16 @@ count = 0
 
 while l3_file.more():
     frame = l3_file.pop_physics()
+    charge = []
+    for i in frame['LaputopHLCVEM'].keys():
+        charge.append(frame['LaputopHLCVEM'][i][0].charge)
+    try:
+        check = np.array(charge)>10
+    except RuntimeWarning:
+        continue
     if (count > 100):
         break
-    elif (np.log10(frame['MCPrimary'].energy) < 7):
+    elif (np.log10(frame['MCPrimary'].energy) < 7)&(np.sum(check)>5):
         continue
 
     eventinfo = {}
@@ -45,6 +52,8 @@ while l3_file.more():
         eventinfo[omkey]['x'] = position.x
         eventinfo[omkey]['y'] = position.y
         eventinfo[omkey]['z'] = position.z
+        eventinfo[omkey]['ShowerCOG_x'] = frame['ShowerCOG'].pos.x
+        eventinfo[omkey]['ShowCOG_y'] = frame['ShowerCOG'].pos.y
         eventinfo[omkey]['m'] = frame['WaveformInfo'][omkey]['m']
         eventinfo[omkey]['s'] = frame['WaveformInfo'][omkey]['s']
         eventinfo[omkey]['t0'] = frame['WaveformInfo'][omkey]['t_0']
@@ -61,6 +70,15 @@ while l3_file.more():
         eventinfo[omkey]['spemean'] = spe_mean
         pe_per_vem = frame['I3Calibration'].vem_cal[OMKey(string,dom)]
         eventinfo[omkey]['pe_per_vem'] = pe_per_vem.pe_per_vem/pe_per_vem.corr_factor
+        eventinfo[omkey]['angular_resolution'] = frame['LaputopParams'].angular_resolution
+        eventinfo[omkey]['chi2_ldf'] = frame['LaputopParams'].chi2_ldf
+        eventinfo[omkey]['chi2_time'] = frame['LaputopParams'].chi2_time
+        eventinfo[omkey]['Laputop_dir_zenith'] = frame['Laputop'].dir.zenith
+        eventinfo[omkey]['Laputop_dir_azimuth'] = frame['Laputop'].dir.azimuth
+        eventinfo[omkey]['Laputop_time'] = frame['Laputop'].time
+        eventinfo[omkey]['Laputop_pos_x'] = frame['Laputop'].pos.x
+        eventinfo[omkey]['Laputop_pos_y'] = frame['Laputop'].pos.y
+
 
 
     event['event_%s'%(count)] = eventinfo
