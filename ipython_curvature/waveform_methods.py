@@ -95,7 +95,7 @@ def process_file(run,event,input_file,geometry):
         phi_dom = output['icetop_geometry'][DOM]['angles'][0]
         theta_dom = output['icetop_geometry'][DOM]['angles'][1]
         
-        time_list1 = [i*z + start_time - tc for i in range(len(x))]
+        time_list1 = [i*z + start_time for i in range(len(x))]
         
         #-----------Calculate CDF------------
                         
@@ -121,10 +121,11 @@ def process_file(run,event,input_file,geometry):
         output[run][event][DOM]['charge'] = input_file[run][event]['waveform_info'][DOM_string]['Charge_PE']
         output[run][event][DOM]['r'] = ((xc-x_dom)**2.0 + (yc-y_dom)**2.0)**0.5
         
-    for DOM in input_file[run][event]['All_pulses'].keys():
-        output[run][event][DOM]['all_time'] = input_file[run][event]['All_pulses'][DOM]['time']
-        output[run][event][DOM]['all_charge'] = input_file[run][event]['All_pulses'][DOM]['charge']
-        output[run][event][DOM]['all_radius'] = input_file[run][event]['All_pulses'][DOM]['radius']
+    #for DOM in input_file[run][event]['All_pulses'].keys():
+    #    DOM = str(DOM)
+    #    output[run][event][DOM]['all_time'] = input_file[run][event]['All_pulses'][DOM]['time']
+    #    output[run][event][DOM]['all_charge'] = input_file[run][event]['All_pulses'][DOM]['charge']
+    #    output[run][event][DOM]['all_radius'] = input_file[run][event]['All_pulses'][DOM]['radius']
             
     return output
 
