@@ -82,6 +82,7 @@ while l3_file.more():
         eventinfo[omkey]['Laputop_time'] = frame['Laputop'].time
         eventinfo[omkey]['Laputop_pos_x'] = frame['Laputop'].pos.x
         eventinfo[omkey]['Laputop_pos_y'] = frame['Laputop'].pos.y
+        eventinfo[omkey]['Difference'] = frame['WaveformInfo'][omkey]['StartTime'] - frame['WaveformInfo'][omkey]['t_0']
         
 
 
