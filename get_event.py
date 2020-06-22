@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 
 
-data_set_number = str(12360)
+data_set_number = str(12362)
 filenumber = str(0)
 file_name = '/data/user/amedina/CosmicRay/Analysis/%s_%s.i3.bz2'%(data_set_number,filenumber)
 l3_file = dataio.I3File(file_name,'r')
@@ -103,5 +103,5 @@ for user_id, d in event.items():
 
 df = pd.concat(frames, keys=user_ids)
 
-df.to_csv('Events.csv')
+df.to_csv('Events_iron.csv')
 print(df.head())
