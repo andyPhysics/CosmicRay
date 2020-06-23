@@ -56,6 +56,7 @@ def magnitude_spherical(theta,d_theta,d_phi):
     return dl
 
 def get_fit(frame,tol):    
+    pass_value = True
     true_zen = frame['MCPrimary'].dir.zenith
     true_az = frame['MCPrimary'].dir.azimuth
     
@@ -97,27 +98,30 @@ def get_fit(frame,tol):
     
     get_t_new = partial(get_t,tc=tc,xc=xc,yc=yc,zc=zc)
     
-    check = [True for i in range(len(event1))]
+    check = [True for i in range(len(x_o))]
     remove_index_list = []
     
-    fit_original = curve_fit(get_t_new,(x_o,y_o,z_o,r_o),t0_o,
-                    p0=[x_start,y_start,z_start,a_start,b_start,sigma_start],
-                    bounds=((-1,-1,-1,0,0,0),(1,1,0,2e-3,200,500)),
-                    maxfev=3000,
-                    absolute_sigma=True)
-
-    vector_list = []
-    fit_list = []
-    mag_list = [0]
-    x,y,z = get_n(fit_original[0][0],fit_original[0][1],fit_original[0][2])
-    vector_list.append(np.array([x,y,z]))
-    fit_list.append(fit_original)
-
-    pass_value = False
+    try:
+        fit_original = curve_fit(get_t_new,(x_o,y_o,z_o,r_o),t0_o,
+                                 p0=[x_start,y_start,z_start,a_start,b_start,sigma_start],
+                                 bounds=((-1,-1,-1,0,0,0),(1,1,0,2e-3,200,500)),
+                                 maxfev=3000,
+                                 absolute_sigma=True)
+        vector_list = []
+        fit_list = []
+        mag_list = [0]
+        x,y,z = get_n(fit_original[0][0],fit_original[0][1],fit_original[0][2])
+        vector_list.append(np.array([x,y,z]))
+        fit_list.append(fit_original)
+    except RuntimeError:
+        final_fit = None
+        check1 = None
+        fit_status = False
+        pass_value = False
 
     count = 0
     
-    while True:
+    while pass_value:
         if count == 0:
             check1 = np.copy(check)
         else:
@@ -139,20 +143,26 @@ def get_fit(frame,tol):
             z = z_o[check2]
             r = r_o[check2]
             t0 = t0_o[check2]
+            
+            try:
+                fit = curve_fit(get_t_new,(x,y,z,r),t0,
+                                p0=[fit_list[-1][0][0],fit_list[-1][0][1],fit_list[-1][0][2],fit_list[-1][0][3],fit_list[-1][0][4],fit_list[-1][0][5]],
+                                bounds=((-1,-1,-1,0,0,0),(1,1,0,2e-3,200,500)),
+                                maxfev=5000,
+                                absolute_sigma=True)
+            except RuntimeError:
+                continue
     
-            fit = curve_fit(get_t_new,(x,y,z,r),t0,
-                            p0=[fit_list[-1][0][0],fit_list[-1][0][1],fit_list[-1][0][2],fit_list[-1][0][3],fit_list[-1][0][4],fit_list[-1][0][5]],
-                            bounds=((-1,-1,-1,0,0,0),(1,1,0,2e-3,200,500)),
-                            maxfev=5000,
-                            absolute_sigma=True)
+            
             fit_check.append(fit)
             x,y,z = get_n(fit[0][0],fit[0][1],fit[0][2])
             vector_check_list.append([x,y,z])
             removed.append(i)
         
-        x_o,y_o,z_o = get_n(fit_list[-1][0][0],fit_list[-1][0][1],fit_list[-1][0][2])
+
+        x_1,y_1,z_1 = get_n(fit_list[-1][0][0],fit_list[-1][0][1],fit_list[-1][0][2])
         
-        theta = np.arctan(((x_o**2.0+y_o**2.0)**0.5)/z_o)
+        theta = np.arctan(((x_1**2.0+y_1**2.0)**0.5)/z_1)
         
         output = space_angle_diff(vector_list[-1],vector_check_list)
         
@@ -166,33 +176,43 @@ def get_fit(frame,tol):
         mag_list.append(mag[np.argmax(mag)])
         
         vector1 = np.sum(vector_check_list,axis=0)/len(vector_check_list)
-        vector2 = np.array([x_o,y_o,z_o])
+        vector2 = np.array([x_1,y_1,z_1])
         bias = (len(vector_check_list)-1)*(vector1-vector2)
+        count+=1
         
-        if abs(mag_list[-1]-mag_list[-2])<tol:
+        if (abs(mag_list[-1]-mag_list[-2])<tol):
             check1[remove_index] = False
             final_fit = fit_check[np.argmax(mag)]
             x_final,y_final,z_final = get_n(final_fit[0][0],final_fit[0][1],final_fit[0][2])
             ang_diff_final = get_ang_diff(x_final,y_final,z_final,true_x,true_y,true_z)
+            fit_status = True
+            print(ang_diff_final)
             break
-            
+
+
         
         
-    return final_fit, check1
+    return final_fit, check1 , fit_status
 
 class New_fit(I3Module):
     def __init__(self, context):
         I3Module.__init__(self, context)
 
     def Physics(self, frame):
-        fit, mask = get_fit(fit,0.5)
-        mask1 = dataclasses.I3RecoPulseSeriesMapMask(self.frame, 'LaputopHLCVEM')
+        check = True
+        fit, mask, fit_status = get_fit(frame,0.5)
+        
+        mask1 = dataclasses.I3RecoPulseSeriesMapMask(frame,'LaputopHLCVEM')
         count = 0
-        for omkey in frame['WaveformInfo'].keys():
-            dom = int(omkey.split(',')[1])
-            string = int(omkey.split(',')[0].split('(')[1])
-            key = OMKey(string,dom)
-            mask1.set(key, 1, mask[count])
+        
+        if fit_status:
+            for omkey in frame['WaveformInfo'].keys():
+                dom = int(omkey.split(',')[1])
+                string = int(omkey.split(',')[0].split('(')[1])
+                key = OMKey(string,dom)
+                mask1.set(key, bool(mask[count]))
+                count += 1
 
+        frame['NewMask'] = mask1
 
         self.PushFrame(frame)

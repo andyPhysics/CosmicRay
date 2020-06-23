@@ -22,6 +22,7 @@ from icecube.tableio import I3TableWriter
 from icecube.rootwriter import I3ROOTTableService
 
 from methods import New_fit
+from icecube.toprec import LaputopStandard
 
 import numpy as np
 
@@ -467,7 +468,11 @@ def function2(i):
         ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood                                 
     )
 
+    tray.AddModule(New_fit)
+
     tray.AddModule(Get_data)
+
+    tray.AddSegment(LaputopStandard,"Laputop_new", pulses='NewMask')
 
     tray.AddModule("I3Writer","EventWriter")(
         ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
@@ -536,3 +541,5 @@ def function2(i):
 
 pool = mp.Pool(5)
 pool.map(function2,range(len(file_list)))
+#for i in range(len(file_list)):
+#    function2(i)
