@@ -21,6 +21,8 @@ import multiprocessing as mp
 from icecube.tableio import I3TableWriter
 from icecube.rootwriter import I3ROOTTableService
 
+from methods import New_fit
+
 import numpy as np
 
 ## Set the log level
@@ -359,6 +361,8 @@ class Get_data(I3Module):
         frame['sigma_s'] = sigma_s
         frame['sigma_t0'] = sigma_t0
         self.PushFrame(frame)
+
+
 
 
 file_list = np.array_split(file_list,5)
