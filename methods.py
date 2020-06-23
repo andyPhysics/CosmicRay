@@ -186,4 +186,13 @@ class New_fit(I3Module):
 
     def Physics(self, frame):
         fit, mask = get_fit(fit,0.5)
+        mask1 = dataclasses.I3RecoPulseSeriesMapMask(self.frame, 'LaputopHLCVEM')
+        count = 0
+        for omkey in frame['WaveformInfo'].keys():
+            dom = int(omkey.split(',')[1])
+            string = int(omkey.split(',')[0].split('(')[1])
+            key = OMKey(string,dom)
+            mask1.set(key, 1, mask[count])
+
+
         self.PushFrame(frame)
