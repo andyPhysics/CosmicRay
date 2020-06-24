@@ -80,7 +80,7 @@ while l3_file.more():
         eventinfo[omkey]['chi2_time'] = frame['LaputopParams'].chi2_time
         eventinfo[omkey]['Laputop_dir_zenith'] = frame['Laputop'].dir.zenith
         eventinfo[omkey]['Laputop_dir_azimuth'] = frame['Laputop'].dir.azimuth
-        eventinfo[omkey]['Laputop_dir_zenith'] = frame['Laputop_new'].dir.zenith
+        eventinfo[omkey]['Laputop_new_zenith'] = frame['Laputop_new'].dir.zenith
         eventinfo[omkey]['Laputop_new_azimuth'] = frame['Laputop_new'].dir.azimuth
         eventinfo[omkey]['Laputop_time'] = frame['Laputop'].time
         eventinfo[omkey]['Laputop_pos_x'] = frame['Laputop'].pos.x
