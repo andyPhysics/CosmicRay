@@ -79,6 +79,9 @@ def get_fit(frame,tol):
     z_o = []
     r_o = []
     t0_o = []
+    check = []
+    remove_index_list = []
+    count = 0
     for omkey in frame['WaveformInfo'].keys():
         dom = int(omkey.split(',')[1])
         string = int(omkey.split(',')[0].split('(')[1])
@@ -88,7 +91,15 @@ def get_fit(frame,tol):
         z_o.append(position.z)
         r_o.append(((position.x)**2.0 + (position.y)**2.0 + (position.z)**2.0)**0.5)
         t0_o.append(frame['WaveformInfo'][omkey]['t_0'])
-
+        if frame['WaveformInfo'][omkey]['t_0'] == 0:
+            check.append(False)
+            remove_index_list.append(count)
+        elif abs(frame['WaveformInfo'][omkey]['t_0'] - frame['WaveformInfo'][omkey]['StartTime'])>50:
+            check.append(False)
+            remove_index_list.append(count)
+        else:
+            check.append(True)
+        count+=1
 
     x_o = np.array(x_o)
     y_o = np.array(y_o)
@@ -97,10 +108,7 @@ def get_fit(frame,tol):
     t0_o = np.array(t0_o)
     
     get_t_new = partial(get_t,tc=tc,xc=xc,yc=yc,zc=zc)
-    
-    check = [True for i in range(len(x_o))]
-    remove_index_list = []
-    
+        
     try:
         fit_original = curve_fit(get_t_new,(x_o,y_o,z_o,r_o),t0_o,
                                  p0=[x_start,y_start,z_start,a_start,b_start,sigma_start],
@@ -202,7 +210,7 @@ class New_fit(I3Module):
         check = True
         fit, mask, fit_status = get_fit(frame,0.5)
         
-        mask1 = dataclasses.I3RecoPulseSeriesMapMask(frame,'LaputopHLCVEM')
+        mask1 = dataclasses.I3RecoPulseSeriesMapMask(frame,'All_pulses')
         count = 0
         
         if fit_status:

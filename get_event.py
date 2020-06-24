@@ -15,10 +15,11 @@ import numpy as np
 import pandas as pd
 
 
-data_set_number = str(12362)
+data_set_number = str(12360)
 filenumber = str(0)
 file_name = '/data/user/amedina/CosmicRay/Analysis/%s_%s.i3.bz2'%(data_set_number,filenumber)
 l3_file = dataio.I3File(file_name,'r')
+output_name = 'New_file.csv'
 
 event = {}
 
@@ -33,7 +34,7 @@ while l3_file.more():
         check = np.array(charge)>10
     except RuntimeWarning:
         continue
-    if (count > 1000):
+    if (count > 100):
         break
     elif (np.log10(frame['MCPrimary'].energy) < 7)&(np.sum(check)>5):
         continue
@@ -79,6 +80,8 @@ while l3_file.more():
         eventinfo[omkey]['chi2_time'] = frame['LaputopParams'].chi2_time
         eventinfo[omkey]['Laputop_dir_zenith'] = frame['Laputop'].dir.zenith
         eventinfo[omkey]['Laputop_dir_azimuth'] = frame['Laputop'].dir.azimuth
+        eventinfo[omkey]['Laputop_dir_zenith'] = frame['Laputop_new'].dir.zenith
+        eventinfo[omkey]['Laputop_new_azimuth'] = frame['Laputop_new'].dir.azimuth
         eventinfo[omkey]['Laputop_time'] = frame['Laputop'].time
         eventinfo[omkey]['Laputop_pos_x'] = frame['Laputop'].pos.x
         eventinfo[omkey]['Laputop_pos_y'] = frame['Laputop'].pos.y
@@ -103,5 +106,5 @@ for user_id, d in event.items():
 
 df = pd.concat(frames, keys=user_ids)
 
-df.to_csv('Events_iron.csv')
+df.to_csv(output_name)
 print(df.head())

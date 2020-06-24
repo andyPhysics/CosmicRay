@@ -236,10 +236,7 @@ class Get_data(I3Module):
                               np.cos(zenith_core)])
 
         output_map = dataclasses.I3RecoPulseSeriesMap()
-        output_10 = dataclasses.I3RecoPulseSeriesMap()
-        output_50 = dataclasses.I3RecoPulseSeriesMap()
-        output_90 = dataclasses.I3RecoPulseSeriesMap()
-
+ 
         Laputop = frame['Laputop']
         x_core = np.array([Laputop.pos.x,Laputop.pos.y,Laputop.pos.z])
         t_core = Laputop.time
@@ -257,37 +254,10 @@ class Get_data(I3Module):
         sigma_s = dataclasses.I3MapKeyVectorDouble()
         sigma_t0 = dataclasses.I3MapKeyVectorDouble()
 
-        for i in frame['LaputopSLCVEM'].keys():
-            output_map[i] = dataclasses.I3RecoPulseSeries()
-
-            pulse = dataclasses.I3RecoPulse()
-
-            for j in frame['LaputopSLCVEM'][i]:
-                pulse.charge = j.charge
-
-                time = j.time
-                position_dom = frame['I3Geometry'].omgeo[i].position
-                x_dom = np.array([position_dom.x , position_dom.y , position_dom.z])
-                
-                Radius = np.dot(x_dom-x_core,x_dom-x_core)**0.5
-                unit_dom = (x_dom-x_core)/Radius
-                true_radius = np.dot(unit_dom-unit_core,x_dom-x_core)
-                #time_signal = time - (1/c) * np.dot(x_core-x_dom,n) - t_cog
-                time_signal = time
-                pulse.time = time_signal
-
-                output_map[i].append(pulse)
-
         for i in frame['LaputopHLCVEM'].keys():
             output_map[i] = dataclasses.I3RecoPulseSeries()
-            output_10[i] = dataclasses.I3RecoPulseSeries()
-            output_50[i] = dataclasses.I3RecoPulseSeries()
-            output_90[i] = dataclasses.I3RecoPulseSeries()
 
             pulse = dataclasses.I3RecoPulse()
-            pulse2 = dataclasses.I3RecoPulse()
-            pulse3 = dataclasses.I3RecoPulse()
-            pulse4 = dataclasses.I3RecoPulse()
 
             vec = []
             vec_old = []
@@ -300,9 +270,7 @@ class Get_data(I3Module):
             vec_sigma_t = []
             for j in frame['LaputopHLCVEM'][i]:
                 pulse.charge = j.charge
-                pulse2.charge = j.charge
-                pulse3.charge = j.charge
-                pulse4.charge = j.charge
+
                 time = j.time
                 position_dom = frame['I3Geometry'].omgeo[i].position
                 x_dom = np.array([position_dom.x , position_dom.y , position_dom.z])
@@ -311,20 +279,12 @@ class Get_data(I3Module):
                 unit_dom = (x_dom-x_core)/Radius
                 true_radius = np.dot(unit_dom-unit_core,x_dom-x_core)
 
-                #time_signal = time - (1/c) * np.dot(x_core-x_dom,n) - t_cog
                 time_signal = time
             
                 vec.append(true_radius)
                 vec_old.append(Radius)
-                pulse.time = time_signal
                 key = str(i)
-                A = frame['CurvatureOnlyParams'].value(LaputopParameter.CurvParabA)
-                N = frame['CurvatureOnlyParams'].value(LaputopParameter.CurvGaussN)
-                D = frame['CurvatureOnlyParams'].value(LaputopParameter.CurvGaussD)
-                delta_t = A * Radius**2.0 + N * (1-np.exp(-Radius**2.0/(2*(D**2.0))))
-                pulse2.time = frame['WaveformInfo'][key]['Time_50'] - (1/c) * np.dot(x_core-x_dom,n) - delta_t
-                pulse3.time = frame['WaveformInfo'][key]['Time_10'] - (1/c) * np.dot(x_core-x_dom,n) - delta_t
-                pulse4.time = frame['WaveformInfo'][key]['Time_90'] - (1/c) * np.dot(x_core-x_dom,n) - delta_t
+                pulse.time = frame['WaveformInfo'][key]['t_0']
                 vec_m .append(frame['WaveformInfo'][key]['m'])
                 vec_s.append(frame['WaveformInfo'][key]['s'])
                 vec_chi2.append(frame['WaveformInfo'][key]['chi2'])
@@ -334,9 +294,6 @@ class Get_data(I3Module):
                 vec_sigma_t.append(frame['WaveformInfo'][key]['sigma_t'])
 
                 output_map[i].append(pulse)
-                output_50[i].append(pulse2)
-                output_10[i].append(pulse3)
-                output_90[i].append(pulse4)
 
             radius[i] = np.array(vec)
             radius_old[i] = np.array(vec_old)
@@ -351,9 +308,6 @@ class Get_data(I3Module):
         frame['All_radius'] = radius
         frame['All_radius_old'] = radius_old
         frame['All_pulses'] = output_map
-        frame['All_10'] = output_10
-        frame['All_50'] = output_50
-        frame['All_90'] = output_90
         frame['m'] = m
         frame['s'] = s
         frame['chi2'] = chi2
@@ -381,7 +335,7 @@ def function2(i):
     #**************************************************
     #                 Reader and whatnot
     #**************************************************
-
+    '''
     tray.AddService("I3GulliverMinuitFactory","Minuit")(
         ("MinuitPrintLevel",-2),
         ("FlatnessCheck",True),
@@ -418,7 +372,7 @@ def function2(i):
         ("MaxD",500.0),
         ("StepsizeD",2.0)
     )
-    
+    '''
     datareadoutName = 'IceTopLaputopSeededSelectedHLC'
     badtanksName= "BadDomsList"
     
@@ -454,7 +408,7 @@ def function2(i):
         ("curvature","gaussparfree")      # yes, do the CURVATURE likelihood                                                               
     )
     
-    
+    '''
     tray.AddModule("I3LaputopFitter","CurvatureOnly")(
         ("SeedService","CurvSeed"),
         ("NSteps",3),                    # <--- tells it how many services to look for and perform                                          
@@ -467,10 +421,10 @@ def function2(i):
         ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood                                                              
         ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood                                 
     )
+    '''
+    tray.AddModule(Get_data)
 
     tray.AddModule(New_fit)
-
-    tray.AddModule(Get_data)
 
     tray.AddSegment(LaputopStandard,"Laputop_new", pulses='NewMask')
 
@@ -508,12 +462,9 @@ def function2(i):
                       'All_pulses',
                       'All_radius',
                       'All_radius_old',
-                      'All_10',
-                      'All_50',
-                      'All_90',
                       'ShowerCOG',
-                      'CurvatureOnly',
-                      'CurvatureOnlyParams',
+                      #'CurvatureOnly',
+                      #'CurvatureOnlyParams',
                       'm',
                       's',
                       'chi2',
