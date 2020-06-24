@@ -22,7 +22,7 @@ from icecube.tableio import I3TableWriter
 from icecube.rootwriter import I3ROOTTableService
 
 from methods import New_fit
-from icecube.toprec import LaputopStandard
+from my_laputop_segment import LaputopStandard
 
 import numpy as np
 

@@ -123,7 +123,7 @@ def get_fit(frame,tol):
         fit_list.append(fit_original)
     except RuntimeError:
         final_fit = None
-        check1 = None
+        check1 = check
         fit_status = False
         pass_value = False
 
@@ -194,7 +194,6 @@ def get_fit(frame,tol):
             x_final,y_final,z_final = get_n(final_fit[0][0],final_fit[0][1],final_fit[0][2])
             ang_diff_final = get_ang_diff(x_final,y_final,z_final,true_x,true_y,true_z)
             fit_status = True
-            print(ang_diff_final)
             break
 
 
@@ -207,19 +206,18 @@ class New_fit(I3Module):
         I3Module.__init__(self, context)
 
     def Physics(self, frame):
-        check = True
         fit, mask, fit_status = get_fit(frame,0.5)
         
         mask1 = dataclasses.I3RecoPulseSeriesMapMask(frame,'All_pulses')
         count = 0
         
-        if fit_status:
-            for omkey in frame['WaveformInfo'].keys():
-                dom = int(omkey.split(',')[1])
-                string = int(omkey.split(',')[0].split('(')[1])
-                key = OMKey(string,dom)
-                mask1.set(key, bool(mask[count]))
-                count += 1
+
+        for omkey in frame['WaveformInfo'].keys():
+            dom = int(omkey.split(',')[1])
+            string = int(omkey.split(',')[0].split('(')[1])
+            key = OMKey(string,dom)
+            mask1.set(key, bool(mask[count]))
+            count += 1
 
         frame['NewMask'] = mask1
 
