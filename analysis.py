@@ -25,6 +25,7 @@ from methods import New_fit
 from my_laputop_segment import LaputopStandard
 
 import numpy as np
+from functools import partial
 
 ## Set the log level
 ## Uncomment this in if you're doing code development!
@@ -99,7 +100,7 @@ class Process_Waveforms(I3Module):
         self.PushFrame(frame)
 
 def function(t,m,s,t_0):
-    y = (1/(2.*np.pi)**0.5) * (1./(s*(t-t_0))) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
+    y = (1/(2.*np.pi)**0.5) * (1./(s*abs(t-t_0))) * np.exp(-(np.log(abs(t-t_0))-m)**2.0/(2.*s**2.0))
     return np.log(y)
 
 def chisquare_value(observed,true,ddof = 3):
@@ -118,7 +119,7 @@ class Extract_info(I3Module):
         for i in frame['LaputopHLCWaveforms'].keys():
             key = str(i)
             waveform = np.array(frame['LaputopHLCWaveforms'][i][0].waveform)
-            time = frame['LaputopHLCWaveforms'][i][0].time
+            time = frame['LaputopHLCVEM'][i][0].time
             binwidth = frame['LaputopHLCWaveforms'][i][0].binwidth
             
             time_values = np.array([i*binwidth + time for i in range(len(waveform))])
@@ -172,30 +173,27 @@ class Extract_info(I3Module):
             check = np.array(waveform)>0
 
             check = [(i and j) and k for i,j,k in zip(check_time,check_time2,check)]
+            new_function = partial(function,t_0=time)
 
             try:
-                fit = curve_fit(function,time_values[check],np.log(waveform[check]/np.sum(waveform[check])),bounds=((-np.inf,0,0),np.inf),p0 = [1,1,time],maxfev=10000)
+                fit = curve_fit(new_function,time_values[check],np.log(waveform[check]/np.sum(waveform[check])),bounds=((1e-20,1e-20),np.inf),p0 = [1,1],maxfev=10000)
                 fit_status = True
             except:
                 fit_status = False
             
             if fit_status:
-                chi2 = chisquare_value(function(time_values[check],fit[0][0],fit[0][1],fit[0][2]),np.log(waveform[check]/np.sum(waveform[check])))
+                chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1]),np.log(waveform[check]/np.sum(waveform[check])))
                 m = fit[0][0]
                 s = fit[0][1]
-                t_0 = fit[0][2]
                 
                 sigma_m = (fit[1][0][0])**0.5
                 sigma_s = (fit[1][1][1])**0.5
-                sigma_t = (fit[1][2][2])**0.5
             else:
                 chi2 = 0
                 m = 0
                 s = 0
-                t_0 = 0
                 sigma_m = 0
-                sigma_s = 0
-                sigma_t = 0
+                sigma_s = 0 
 
             OutputWaveformInfo[key] = dataclasses.I3MapStringDouble()
             OutputWaveformInfo[key]['StartTime'] = time
@@ -210,10 +208,8 @@ class Extract_info(I3Module):
             OutputWaveformInfo[key]['leading_edge'] = leading_edge
             OutputWaveformInfo[key]['m'] = m
             OutputWaveformInfo[key]['s'] = s
-            OutputWaveformInfo[key]['t_0'] = t_0
             OutputWaveformInfo[key]['sigma_m'] = sigma_m
             OutputWaveformInfo[key]['sigma_s'] = sigma_s
-            OutputWaveformInfo[key]['sigma_t'] = sigma_t
             OutputWaveformInfo[key]['chi2'] = chi2
 
         frame['WaveformInfo'] = OutputWaveformInfo
@@ -248,11 +244,9 @@ class Get_data(I3Module):
         radius_old = dataclasses.I3MapKeyVectorDouble()
         m = dataclasses.I3MapKeyVectorDouble()
         s = dataclasses.I3MapKeyVectorDouble()
-        t0 = dataclasses.I3MapKeyVectorDouble()
         chi2 = dataclasses.I3MapKeyVectorDouble()
         sigma_m = dataclasses.I3MapKeyVectorDouble()
         sigma_s = dataclasses.I3MapKeyVectorDouble()
-        sigma_t0 = dataclasses.I3MapKeyVectorDouble()
 
         for i in frame['LaputopHLCVEM'].keys():
             output_map[i] = dataclasses.I3RecoPulseSeries()
@@ -264,10 +258,8 @@ class Get_data(I3Module):
             vec_m = []
             vec_s = []
             vec_chi2 = []
-            vec_t0 = []
             vec_sigma_m = []
             vec_sigma_s = []
-            vec_sigma_t = []
             for j in frame['LaputopHLCVEM'][i]:
                 pulse.charge = j.charge
 
@@ -284,14 +276,12 @@ class Get_data(I3Module):
                 vec.append(true_radius)
                 vec_old.append(Radius)
                 key = str(i)
-                pulse.time = frame['WaveformInfo'][key]['t_0']
+                pulse.time = frame['LaputopHLCVEM'][i][0].time
                 vec_m .append(frame['WaveformInfo'][key]['m'])
                 vec_s.append(frame['WaveformInfo'][key]['s'])
                 vec_chi2.append(frame['WaveformInfo'][key]['chi2'])
-                vec_t0.append(frame['WaveformInfo'][key]['t_0'])
                 vec_sigma_m.append(frame['WaveformInfo'][key]['sigma_m'])
                 vec_sigma_s.append(frame['WaveformInfo'][key]['sigma_s'])
-                vec_sigma_t.append(frame['WaveformInfo'][key]['sigma_t'])
 
                 output_map[i].append(pulse)
 
@@ -300,10 +290,8 @@ class Get_data(I3Module):
             m[i] = np.array(vec_m)
             s[i] = np.array(vec_s)
             chi2[i] = np.array(vec_chi2)
-            t0[i] = np.array(vec_t0)
             sigma_m[i] = np.array(vec_sigma_m)
             sigma_s[i] = np.array(vec_sigma_s)
-            sigma_t0[i] = np.array(vec_sigma_t)
 
         frame['All_radius'] = radius
         frame['All_radius_old'] = radius_old
@@ -311,10 +299,8 @@ class Get_data(I3Module):
         frame['m'] = m
         frame['s'] = s
         frame['chi2'] = chi2
-        frame['t0'] = t0
         frame['sigma_m'] = sigma_m
         frame['sigma_s'] = sigma_s
-        frame['sigma_t0'] = sigma_t0
         self.PushFrame(frame)
 
 
@@ -335,44 +321,7 @@ def function2(i):
     #**************************************************
     #                 Reader and whatnot
     #**************************************************
-    '''
-    tray.AddService("I3GulliverMinuitFactory","Minuit")(
-        ("MinuitPrintLevel",-2),
-        ("FlatnessCheck",True),
-        ("Algorithm","MIGRAD"),
-        ("MaxIterations",50000),
-        ("MinuitStrategy",2),
-        ("Tolerance",0.1),
-    )
 
-    tray.AddService("I3CurvatureSeedServiceFactory","CurvSeed")(
-        ("SeedTrackName", "Laputop"), # This is also the default                                                                        
-        ("A", 6e-4),            # This comes from the original IT-26 gausspar function                                                  
-        ("N",9.9832),
-        ("D",63.5775)
-    )
-    
-    tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam")(
-        ("FreeA", True),
-        ("MinA", 0.0),
-        ("MaxA", 2e-3),
-        ("StepsizeA", 1e-5)
-    )
-    
-    tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam2")(
-        ("FreeN",True),
-        ("MinN",0),
-        ("MaxN",200.0),
-        ("StepsizeN",2.0)
-    )
-    
-    tray.AddService("I3CurvatureParametrizationServiceFactory","CurvParam3")(
-        ("FreeD",True),
-        ("MinD",0),
-        ("MaxD",500.0),
-        ("StepsizeD",2.0)
-    )
-    '''
     datareadoutName = 'IceTopLaputopSeededSelectedHLC'
     badtanksName= "BadDomsList"
     
@@ -401,32 +350,11 @@ def function2(i):
     
     tray.AddModule(Extract_info)
     
-    tray.AddService("I3LaputopLikelihoodServiceFactory","ToprecLike2")(
-        ("datareadout", datareadoutName),
-        ("badtanks", badtanksName),
-        ("ldf", ""),      # do NOT do the LDF (charge) likelihood                                                                          
-        ("curvature","gaussparfree")      # yes, do the CURVATURE likelihood                                                               
-    )
-    
-    '''
-    tray.AddModule("I3LaputopFitter","CurvatureOnly")(
-        ("SeedService","CurvSeed"),
-        ("NSteps",3),                    # <--- tells it how many services to look for and perform                                          
-        ("Parametrization1","CurvParam"),
-        ("Parametrization2","CurvParam2"),
-        ("Parametrization3","CurvParam3"),
-        ("StoragePolicy","OnlyBestFit"),
-        ("Minimizer","Minuit"),
-        ("LogLikelihoodService","ToprecLike2"),     # the three likelihoods                                                                 
-        ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood                                                              
-        ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood                                 
-    )
-    '''
     tray.AddModule(Get_data)
 
-    tray.AddModule(New_fit)
+#    tray.AddModule(New_fit)
 
-    tray.AddSegment(LaputopStandard,"Laputop_new", pulses='NewMask')
+    tray.AddSegment(LaputopStandard,"Laputop_new", pulses='LaputopHLCVEM')
 
     tray.AddModule("I3Writer","EventWriter")(
         ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
@@ -463,15 +391,11 @@ def function2(i):
                       'All_radius',
                       'All_radius_old',
                       'ShowerCOG',
-                      #'CurvatureOnly',
-                      #'CurvatureOnlyParams',
                       'm',
                       's',
                       'chi2',
-                      't0',
                       'sigma_m',
-                      'sigma_s',
-                      'sigma_t0'
+                      'sigma_s'
                   ]
 
 
@@ -492,5 +416,3 @@ def function2(i):
 
 pool = mp.Pool(5)
 pool.map(function2,range(len(file_list)))
-#for i in range(len(file_list)):
-#    function2(i)

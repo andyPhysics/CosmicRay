@@ -9,7 +9,7 @@ from icecube import icetray, dataclasses, dataio, toprec, recclasses,simclasses,
 
 from icecube.icetray import I3Module, OMKey
 from icecube.dataclasses import I3EventHeader, I3Particle
-from icecube.recclasses import I3LaputopParams
+from icecube.recclasses import I3LaputopParams, LaputopParameter
 
 import numpy as np
 import pandas as pd
@@ -34,7 +34,7 @@ while l3_file.more():
         check = np.array(charge)>10
     except RuntimeWarning:
         continue
-    if (count > 500):
+    if (count > 1000):
         break
     elif (np.log10(frame['MCPrimary'].energy) < 7)&(np.sum(check)>5):
         continue
@@ -61,14 +61,13 @@ while l3_file.more():
         eventinfo[omkey]['ShowerCOG_az'] = frame['ShowerPlane'].dir.azimuth
         eventinfo[omkey]['m'] = frame['WaveformInfo'][omkey]['m']
         eventinfo[omkey]['s'] = frame['WaveformInfo'][omkey]['s']
-        eventinfo[omkey]['t0'] = frame['WaveformInfo'][omkey]['t_0']
         eventinfo[omkey]['charge'] = frame['WaveformInfo'][omkey]['Charge']
         eventinfo[omkey]['chargePe'] = frame['WaveformInfo'][omkey]['Charge_PE']
         eventinfo[omkey]['chargeVEM'] = frame['LaputopHLCVEM'][OMKey(string,dom)][0].charge
         eventinfo[omkey]['chi2'] = frame['WaveformInfo'][omkey]['chi2']
-        eventinfo[omkey]['sigmat0'] = frame['WaveformInfo'][omkey]['sigma_t']
         eventinfo[omkey]['sigmam'] = frame['WaveformInfo'][omkey]['sigma_s']
         eventinfo[omkey]['sigmas'] = frame['WaveformInfo'][omkey]['sigma_m']
+        eventinfo[omkey]['A'] = frame['Laputop_newParams'].value(LaputopParameter.CurvParabA)
         fe_impedance = frame['I3Calibration'].dom_cal[OMKey(string,dom)].front_end_impedance
         spe_mean = dataclasses.spe_mean(frame['I3DetectorStatus'].dom_status[OMKey(string,dom)],frame['I3Calibration'].dom_cal[OMKey(string,dom)])
         eventinfo[omkey]['feimpedance'] = fe_impedance
@@ -85,7 +84,6 @@ while l3_file.more():
         eventinfo[omkey]['Laputop_time'] = frame['Laputop'].time
         eventinfo[omkey]['Laputop_pos_x'] = frame['Laputop'].pos.x
         eventinfo[omkey]['Laputop_pos_y'] = frame['Laputop'].pos.y
-        eventinfo[omkey]['Difference'] = frame['WaveformInfo'][omkey]['StartTime'] - frame['WaveformInfo'][omkey]['t_0']
         
 
 
