@@ -28,6 +28,7 @@ count = 0
 while l3_file.more():
     frame = l3_file.pop_physics()
     charge = []
+    time = []
     for i in frame['LaputopHLCVEM'].keys():
         charge.append(frame['LaputopHLCVEM'][i][0].charge)
     try:
@@ -84,7 +85,8 @@ while l3_file.more():
         eventinfo[omkey]['Laputop_time'] = frame['Laputop'].time
         eventinfo[omkey]['Laputop_pos_x'] = frame['Laputop'].pos.x
         eventinfo[omkey]['Laputop_pos_y'] = frame['Laputop'].pos.y
-        
+        eventinfo[omkey]['t_0'] = frame['LaputopHLCVEM'][OMKey(string,dom)][0].time
+
 
 
     event['event_%s'%(count)] = eventinfo
