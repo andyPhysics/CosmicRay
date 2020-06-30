@@ -35,7 +35,7 @@ while l3_file.more():
         check = np.array(charge)>10
     except RuntimeWarning:
         continue
-    if (count > 1000):
+    if (count > 3500):
         break
     elif (np.log10(frame['MCPrimary'].energy) < 7)&(np.sum(check)>5):
         continue
