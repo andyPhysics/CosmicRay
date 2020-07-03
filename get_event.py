@@ -15,11 +15,11 @@ import numpy as np
 import pandas as pd
 
 
-data_set_number = str(12362)
+data_set_number = str(12360)
 filenumber = str(0)
 file_name = '/data/user/amedina/CosmicRay/Analysis/%s_%s.i3.bz2'%(data_set_number,filenumber)
 l3_file = dataio.I3File(file_name,'r')
-output_name = 'Events_iron.csv'
+output_name = 'Events.csv'
 
 event = {}
 
@@ -54,9 +54,9 @@ while l3_file.more():
         eventinfo[omkey]['x'] = position.x
         eventinfo[omkey]['y'] = position.y
         eventinfo[omkey]['z'] = position.z
-        eventinfo[omkey]['ShowerCOG_x'] = frame['ShowerCOG'].pos.x
-        eventinfo[omkey]['ShowerCOG_y'] = frame['ShowerCOG'].pos.y
-        eventinfo[omkey]['ShowerCOG_z'] = frame['ShowerCOG'].pos.z
+        eventinfo[omkey]['ShowerCOG_x'] = frame['Laputop'].pos.x
+        eventinfo[omkey]['ShowerCOG_y'] = frame['Laputop'].pos.y
+        eventinfo[omkey]['ShowerCOG_z'] = frame['Laputop'].pos.z
         eventinfo[omkey]['ShowerCOG_time'] = frame['ShowerCOG'].time
         eventinfo[omkey]['ShowerCOG_zen'] = frame['ShowerPlane'].dir.zenith
         eventinfo[omkey]['ShowerCOG_az'] = frame['ShowerPlane'].dir.azimuth
@@ -86,6 +86,7 @@ while l3_file.more():
         eventinfo[omkey]['Laputop_pos_x'] = frame['Laputop'].pos.x
         eventinfo[omkey]['Laputop_pos_y'] = frame['Laputop'].pos.y
         eventinfo[omkey]['t_0'] = frame['LaputopHLCVEM'][OMKey(string,dom)][0].time
+        eventinfo[omkey]['Xmax'] = frame['MCPrimaryInfo'].ghMaxDepth
 
 
 
