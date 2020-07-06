@@ -27,6 +27,8 @@ from my_laputop_segment import LaputopStandard
 import numpy as np
 from functools import partial
 
+from methods2 import *
+
 ## Set the log level
 ## Uncomment this in if you're doing code development!
 icetray.set_log_level(icetray.I3LogLevel.LOG_INFO)
@@ -303,8 +305,54 @@ class Get_data(I3Module):
         frame['sigma_s'] = sigma_s
         self.PushFrame(frame)
 
+def new_function(X,alpha,beta,chi,omega):
+    z,rho,m = X
+    s = alpha + (m-beta)**2 + chi * z + omega * rho**2
+    return s
 
+class Get_fit(I3Module):
+    def __init__(self, context):
+        I3Module.__init__(self, context)
 
+    def Physics(self, frame):
+        xc = frame['Laputop'].pos.x
+        yc = frame['Laputop'].pos.y
+        zc = frame['Laputop'].pos.z
+        azimuth = frame['Laputop'].dir.azimuth
+        zenith = frame['Laputop'].dir.zenith
+        x = []
+        y = []
+        z = []
+        m = []
+        s = []
+        for key in frame['LaputopHLCVEM'].keys():
+            omkey = str(key)
+            if frame['WaveformInfo'][omkey]['chi2']!=0:
+                m.append(frame['WaveformInfo'][omkey]['m'])
+                s.append(frame['WaveformInfo'][omkey]['s'])
+                position = frame['I3Geometry'].omgeo[key].position
+                x.append(position.x)
+                y.append(position.y)
+                z.append(position.z)
+
+        x_new = [i-xc for i in x]
+        y_new = [i-yc for i in y]
+        z_new = [i-zc for i in z]
+
+        vector = [[i,j,k] for i,j,k in zip(x_new,y_new,z_new)]
+
+        vector_new =[new_vector(i,azimuth,zenith) for i in vector]
+
+        z_corrected = list(zip(*vector_new))[0]
+        rho = list(zip(*vector_new))[1]
+            
+        fit = curve_fit(new_function,xdata=[z_corrected,rho,m],ydata=s)
+        output_map = dataclasses.I3MapStringDouble()
+        output_map['alpha'] = fit[0][0]
+        output_map['beta'] = fit[0][1]
+        output_map['chi'] = fit[0][2]
+        output_map['omega'] = fit[0][3]
+        frame['my_fit'] = output_map
 
 file_list = np.array_split(file_list,5)
 
@@ -355,6 +403,8 @@ def function2(i):
 #    tray.AddModule(New_fit)
 
     tray.AddSegment(LaputopStandard,"Laputop_new", pulses='LaputopHLCVEM')
+
+    tray.AddModule(Get_fit)
 
     tray.AddModule("I3Writer","EventWriter")(
         ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
