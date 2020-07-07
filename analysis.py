@@ -107,7 +107,7 @@ def function(t,m,s,t_0):
 
 def chisquare_value(observed,true,ddof = 3):
     chi2 = np.sum([((i-j)**2.0)/abs(j) for i,j in zip(observed,true)])
-    return chi2/(len(observed)-ddof)
+    return chi2
 
 from scipy.optimize import curve_fit
 
@@ -184,7 +184,7 @@ class Extract_info(I3Module):
                 fit_status = False
             
             if fit_status:
-                chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1]),np.log(waveform[check]/np.sum(waveform[check])))
+                chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1]),np.log(waveform[check]/np.sum(waveform[check])),ddof=2)
                 m = fit[0][0]
                 s = fit[0][1]
                 
@@ -352,7 +352,11 @@ class Get_fit(I3Module):
         output_map['beta'] = fit[0][1]
         output_map['chi'] = fit[0][2]
         output_map['omega'] = fit[0][3]
+        chi2 = chisquare_value(new_function(np.array([z_corrected,rho,m]),fit[0][0],fit[0][1],fit[0][2],fit[0][3]),s,ddof=4)
+        output_map['chi2'] = chi2
         frame['my_fit'] = output_map
+
+        self.PushFrame(frame)
 
 file_list = np.array_split(file_list,5)
 
