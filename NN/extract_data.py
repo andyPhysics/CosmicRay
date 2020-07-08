@@ -26,8 +26,8 @@ import pandas as pd
 from glob import glob
 
 directory = '/data/user/amedina/CosmicRay/Analysis/'
-my_list = glob(directory + '/12362_*.i3.bz2')
-output_file = 'Iron.csv'
+my_list = glob(directory + '/12631_*.i3.bz2')
+output_file = 'Oxygen.csv'
 print(my_list)
 
 def process_files(input_file):
