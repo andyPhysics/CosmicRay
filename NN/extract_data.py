@@ -26,8 +26,8 @@ import pandas as pd
 from glob import glob
 
 directory = '/data/user/amedina/CosmicRay/Analysis/'
-my_list = glob(directory + '/12631_*.i3.bz2')
-output_file = 'Oxygen.csv'
+my_list = glob(directory + '/12362_*.i3.bz2')
+output_file = 'Iron.csv'
 print(my_list)
 
 def process_files(input_file):
@@ -45,6 +45,7 @@ def process_files(input_file):
     alpha = []
     beta = []
     chi = []
+    chi2 = []
     omega = []
     
     
@@ -71,7 +72,8 @@ def process_files(input_file):
         #my_variables, beta is not related to the age of the shower
         alpha.append(l3_fr['my_fit']['alpha'])
         beta.append(l3_fr['my_fit']['beta'])
-        chi.append(l3_fr['my_fit']['chi2'])
+        chi.append(l3_fr['my_fit']['chi'])
+        chi2.append(l3_fr['my_fit']['chi2'])
         omega.append(l3_fr['my_fit']['omega'])
         
     l3_file.close()
@@ -85,6 +87,7 @@ def process_files(input_file):
     our_map['alpha'] = alpha
     our_map['beta'] = beta
     our_map['chi'] = chi
+    our_map['chi2'] = chi2
     our_map['omega'] = omega
     our_map['Xmax'] = Xmax
 
