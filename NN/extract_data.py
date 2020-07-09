@@ -34,6 +34,7 @@ def process_files(input_file):
     our_map = {}
     mass = []
     energy = []
+    Xmax = []
 
     zenith = []
     S125 = []
@@ -62,6 +63,7 @@ def process_files(input_file):
 
         mass.append(4)
         energy.append(l3_fr['MCPrimary'].energy)
+        Xmax.append(l3_fr['MCPrimaryInfo'].ghMaxDepth)
 
         zenith.append(l3_fr['Laputop'].dir.zenith)
         S125.append(l3_fr['LaputopParams'].value(LaputopParameter.Log10_S125))
@@ -84,6 +86,7 @@ def process_files(input_file):
     our_map['beta'] = beta
     our_map['chi'] = chi
     our_map['omega'] = omega
+    our_map['Xmax'] = Xmax
 
     return our_map
 
