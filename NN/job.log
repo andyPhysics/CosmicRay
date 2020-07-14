@@ -1,0 +1,290 @@
+000 (59211698.000.000) 2020-07-14 13:52:05 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+000 (59211698.001.000) 2020-07-14 13:52:05 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+000 (59211698.002.000) 2020-07-14 13:52:05 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+001 (59211698.002.000) 2020-07-14 13:53:33 Job executing on host: <10.128.10.118:46377?addrs=10.128.10.118-46377&alias=node078.icecube.wisc.edu>
+...
+001 (59211698.001.000) 2020-07-14 13:53:33 Job executing on host: <10.128.10.144:33833?addrs=10.128.10.144-33833&alias=node104.icecube.wisc.edu>
+...
+001 (59211698.000.000) 2020-07-14 13:53:33 Job executing on host: <10.128.10.135:44006?addrs=10.128.10.135-44006&alias=node095.icecube.wisc.edu>
+...
+006 (59211698.002.000) 2020-07-14 13:53:41 Image size of job updated: 283404
+	181  -  MemoryUsage of job (MB)
+	185116  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 13:53:41 Image size of job updated: 283796
+	181  -  MemoryUsage of job (MB)
+	185116  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 13:53:42 Image size of job updated: 283464
+	181  -  MemoryUsage of job (MB)
+	185108  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 13:58:41 Image size of job updated: 290796
+	188  -  MemoryUsage of job (MB)
+	192100  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 13:58:41 Image size of job updated: 292932
+	190  -  MemoryUsage of job (MB)
+	194208  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 13:58:43 Image size of job updated: 291908
+	189  -  MemoryUsage of job (MB)
+	193144  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 14:03:41 Image size of job updated: 295048
+	192  -  MemoryUsage of job (MB)
+	196324  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:03:41 Image size of job updated: 294100
+	191  -  MemoryUsage of job (MB)
+	195404  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:03:44 Image size of job updated: 294952
+	192  -  MemoryUsage of job (MB)
+	196244  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 14:08:42 Image size of job updated: 295048
+	195  -  MemoryUsage of job (MB)
+	198964  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:08:42 Image size of job updated: 294100
+	193  -  MemoryUsage of job (MB)
+	197604  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 14:13:43 Image size of job updated: 295048
+	196  -  MemoryUsage of job (MB)
+	200696  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:13:43 Image size of job updated: 294100
+	196  -  MemoryUsage of job (MB)
+	200040  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:13:44 Image size of job updated: 294952
+	195  -  MemoryUsage of job (MB)
+	199540  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 14:18:43 Image size of job updated: 295048
+	201  -  MemoryUsage of job (MB)
+	204912  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:18:43 Image size of job updated: 294100
+	198  -  MemoryUsage of job (MB)
+	202424  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:18:45 Image size of job updated: 294952
+	197  -  MemoryUsage of job (MB)
+	201424  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 14:23:43 Image size of job updated: 295048
+	202  -  MemoryUsage of job (MB)
+	206688  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:23:43 Image size of job updated: 294100
+	200  -  MemoryUsage of job (MB)
+	204420  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:23:46 Image size of job updated: 294952
+	199  -  MemoryUsage of job (MB)
+	202820  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:28:44 Image size of job updated: 294100
+	203  -  MemoryUsage of job (MB)
+	207272  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 14:28:44 Image size of job updated: 295048
+	204  -  MemoryUsage of job (MB)
+	207892  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:28:46 Image size of job updated: 294952
+	200  -  MemoryUsage of job (MB)
+	204668  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:33:44 Image size of job updated: 294100
+	206  -  MemoryUsage of job (MB)
+	210872  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 14:33:45 Image size of job updated: 295048
+	205  -  MemoryUsage of job (MB)
+	209740  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:33:46 Image size of job updated: 294952
+	202  -  MemoryUsage of job (MB)
+	206528  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:38:44 Image size of job updated: 294100
+	209  -  MemoryUsage of job (MB)
+	213908  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 14:38:46 Image size of job updated: 295048
+	207  -  MemoryUsage of job (MB)
+	211784  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:38:47 Image size of job updated: 294952
+	206  -  MemoryUsage of job (MB)
+	210468  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:43:44 Image size of job updated: 294100
+	211  -  MemoryUsage of job (MB)
+	215788  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 14:43:46 Image size of job updated: 295048
+	209  -  MemoryUsage of job (MB)
+	213364  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:43:48 Image size of job updated: 294952
+	208  -  MemoryUsage of job (MB)
+	212524  -  ResidentSetSize of job (KB)
+...
+006 (59211698.002.000) 2020-07-14 14:46:45 Image size of job updated: 620056
+	209  -  MemoryUsage of job (MB)
+	213364  -  ResidentSetSize of job (KB)
+...
+005 (59211698.002.000) 2020-07-14 14:46:45 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 00:52:28, Sys 0 00:00:35  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:52:28, Sys 0 00:00:35  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :     1.00        4         4 
+	   Disk (KB)             :     4     1000000   1166847 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :   209        3000      3072 
+
+	Job terminated of its own accord at 2020-07-14T19:46:45Z.
+...
+006 (59211698.001.000) 2020-07-14 14:48:45 Image size of job updated: 294100
+	214  -  MemoryUsage of job (MB)
+	218196  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:48:48 Image size of job updated: 294952
+	210  -  MemoryUsage of job (MB)
+	214200  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:53:45 Image size of job updated: 294100
+	217  -  MemoryUsage of job (MB)
+	222160  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:53:48 Image size of job updated: 294952
+	211  -  MemoryUsage of job (MB)
+	215936  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 14:58:45 Image size of job updated: 294100
+	219  -  MemoryUsage of job (MB)
+	223532  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 14:58:49 Image size of job updated: 294952
+	213  -  MemoryUsage of job (MB)
+	217192  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 15:03:46 Image size of job updated: 294100
+	220  -  MemoryUsage of job (MB)
+	225004  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 15:03:50 Image size of job updated: 294952
+	215  -  MemoryUsage of job (MB)
+	219408  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 15:08:47 Image size of job updated: 294100
+	222  -  MemoryUsage of job (MB)
+	226876  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 15:08:50 Image size of job updated: 294952
+	217  -  MemoryUsage of job (MB)
+	221324  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 15:13:47 Image size of job updated: 294100
+	225  -  MemoryUsage of job (MB)
+	229836  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 15:13:50 Image size of job updated: 294952
+	218  -  MemoryUsage of job (MB)
+	222956  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 15:18:47 Image size of job updated: 294100
+	227  -  MemoryUsage of job (MB)
+	231984  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 15:18:51 Image size of job updated: 294952
+	220  -  MemoryUsage of job (MB)
+	225252  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 15:23:47 Image size of job updated: 294100
+	228  -  MemoryUsage of job (MB)
+	233468  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 15:23:52 Image size of job updated: 294952
+	221  -  MemoryUsage of job (MB)
+	226260  -  ResidentSetSize of job (KB)
+...
+006 (59211698.001.000) 2020-07-14 15:28:48 Image size of job updated: 294100
+	230  -  MemoryUsage of job (MB)
+	235432  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 15:28:52 Image size of job updated: 294952
+	223  -  MemoryUsage of job (MB)
+	227544  -  ResidentSetSize of job (KB)
+...
+005 (59211698.001.000) 2020-07-14 15:33:18 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 01:38:34, Sys 0 00:01:02  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 01:38:34, Sys 0 00:01:02  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :     1.00        4         4 
+	   Disk (KB)             :     4     1000000   1166847 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :   230        3000      3072 
+
+	Job terminated of its own accord at 2020-07-14T20:33:18Z.
+...
+006 (59211698.000.000) 2020-07-14 15:33:52 Image size of job updated: 294952
+	224  -  MemoryUsage of job (MB)
+	229328  -  ResidentSetSize of job (KB)
+...
+006 (59211698.000.000) 2020-07-14 15:38:53 Image size of job updated: 294952
+	226  -  MemoryUsage of job (MB)
+	230564  -  ResidentSetSize of job (KB)
+...
+005 (59211698.000.000) 2020-07-14 15:40:42 Job terminated.
+	(1) Normal termination (return value 0)
+		Usr 0 01:45:47, Sys 0 00:01:13  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 01:45:47, Sys 0 00:01:13  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :     1.00        4         4 
+	   Disk (KB)             :     4     1000000   1166652 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :   226        3000      3072 
+
+	Job terminated of its own accord at 2020-07-14T20:40:42Z.
+...
