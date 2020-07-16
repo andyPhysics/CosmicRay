@@ -48,6 +48,8 @@ def process_files(input_file):
     chi = []
     chi2 = []
     omega = []
+    A = []
+    fit_status = []
     
     
     l3_file = dataio.I3File(input_file,'r')
@@ -76,6 +78,8 @@ def process_files(input_file):
         chi.append(l3_fr['my_fit']['chi'])
         chi2.append(l3_fr['my_fit']['chi2'])
         omega.append(l3_fr['my_fit']['omega'])
+        fit_status.append(l3_fr['my_fit']['fit_status'])
+        A.append(l3_fr['Laputop_newParams'].value(LaputopParameter.CurvParabA))
         
     l3_file.close()
     our_map['mass'] = mass
@@ -91,6 +95,8 @@ def process_files(input_file):
     our_map['chi2'] = chi2
     our_map['omega'] = omega
     our_map['Xmax'] = Xmax
+    our_map['fit_status'] = fit_status
+    our_map['A'] = A
 
     return our_map
 

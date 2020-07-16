@@ -102,8 +102,8 @@ class Process_Waveforms(I3Module):
         self.PushFrame(frame)
 
 def function(t,m,s,t_0):
-    y = (1/(2.*np.pi)**0.5) * (1./(s*abs(t-t_0))) * np.exp(-(np.log(abs(t-t_0))-m)**2.0/(2.*s**2.0))
-    return np.log(y)
+    y = (1/(2.*np.pi)**0.5) * (1./(s*(t-t_0))) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
+    return y
 
 def chisquare_value(observed,true,ddof = 3):
     chi2 = np.sum([((i-j)**2.0)/abs(j) for i,j in zip(observed,true)])
@@ -170,21 +170,21 @@ class Extract_info(I3Module):
 
             peak_time = time_values[count]
 
-            check_time = time_values <= peak_time+400
-            check_time2 = time_values >= leading_edge
+            check_time = time_values <= trailing_edge
+            check_time2 = time_values > leading_edge
             check = np.array(waveform)>0
 
             check = [(i and j) and k for i,j,k in zip(check_time,check_time2,check)]
             new_function = partial(function,t_0=time)
 
             try:
-                fit = curve_fit(new_function,time_values[check],np.log(waveform[check]/np.sum(waveform[check])),bounds=((1e-20,1e-20),np.inf),p0 = [1,1],maxfev=10000)
+                fit = curve_fit(new_function,time_values[check],waveform[check]/np.sum(waveform[check]),bounds=((1e-10,1e-10),np.inf),p0 = [1,1],maxfev=10000)
                 fit_status = True
             except:
                 fit_status = False
             
             if fit_status:
-                chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1]),np.log(waveform[check]/np.sum(waveform[check])),ddof=2)
+                chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1]),waveform[check]/np.sum(waveform[check]),ddof=2)
                 m = fit[0][0]
                 s = fit[0][1]
                 
@@ -213,6 +213,7 @@ class Extract_info(I3Module):
             OutputWaveformInfo[key]['sigma_m'] = sigma_m
             OutputWaveformInfo[key]['sigma_s'] = sigma_s
             OutputWaveformInfo[key]['chi2'] = chi2
+            OutputWaveformInfo[key]['fit_status'] = fit_status
 
         frame['WaveformInfo'] = OutputWaveformInfo
         self.PushFrame(frame)
@@ -310,6 +311,10 @@ def new_function(X,alpha,beta,chi,omega):
     s = alpha + (m-beta)**2 + chi * z + omega * rho**2
     return s
 
+def line(x,m,b):
+    s = m * x + b
+    return s
+
 class Get_fit(I3Module):
     def __init__(self, context):
         I3Module.__init__(self, context)
@@ -325,6 +330,7 @@ class Get_fit(I3Module):
         z = []
         m = []
         s = []
+        sigmas = []
         for key in frame['LaputopHLCVEM'].keys():
             omkey = str(key)
             if frame['WaveformInfo'][omkey]['chi2']!=0:
@@ -334,6 +340,8 @@ class Get_fit(I3Module):
                 x.append(position.x)
                 y.append(position.y)
                 z.append(position.z)
+                sigmas.append(frame['WaveformInfo'][omkey]['sigma_s'])
+
 
         x_new = [i-xc for i in x]
         y_new = [i-yc for i in y]
@@ -343,17 +351,29 @@ class Get_fit(I3Module):
 
         vector_new =[new_vector(i,azimuth,zenith) for i in vector]
 
-        z_corrected = list(zip(*vector_new))[0]
-        rho = list(zip(*vector_new))[1]
-            
-        fit = curve_fit(new_function,xdata=[z_corrected,rho,m],ydata=s)
+        z_corrected = np.array(list(zip(*vector_new))[0])
+        rho = np.array(list(zip(*vector_new))[1])
+        m = np.array(m)
+        s = np.array(s)
+        sigmas = np.array(sigmas)
         output_map = dataclasses.I3MapStringDouble()
-        output_map['alpha'] = fit[0][0]
-        output_map['beta'] = fit[0][1]
-        output_map['chi'] = fit[0][2]
-        output_map['omega'] = fit[0][3]
-        chi2 = chisquare_value(new_function(np.array([z_corrected,rho,m]),fit[0][0],fit[0][1],fit[0][2],fit[0][3]),s,ddof=4)
-        output_map['chi2'] = chi2
+
+        try:
+            fit = curve_fit(new_function,xdata=[z_corrected,rho,m],ydata=s,sigma=sigmas)
+            output_map['alpha'] = fit[0][0]
+            output_map['beta'] = fit[0][1]
+            output_map['chi'] = fit[0][2]
+            output_map['omega'] = fit[0][3]
+            chi2 = chisquare_value(new_function(np.array([z_corrected,rho,m]),fit[0][0],fit[0][1],fit[0][2],fit[0][3]),s,ddof=4)
+            output_map['chi2'] = chi2
+            output_map['fit_status'] = 1
+        except TypeError:
+            output_map['alpha'] = 0
+            output_map['beta'] = 0
+            output_map['chi'] = 0
+            output_map['omega'] = 0
+            output_map['chi2'] = 0
+            output_map['fit_status'] = 0
         frame['my_fit'] = output_map
 
         self.PushFrame(frame)
@@ -361,7 +381,7 @@ class Get_fit(I3Module):
 file_list = np.array_split(file_list,5)
 
 def function2(i):
-    I3_OUTFILE = output_directory + data_set_number + '_%s'%(i) + '.i3.bz2'
+    I3_OUTFILE = output_directory + data_set_number + '_%s'%(i)+ '.i3.bz2'
     ROOTFILE = output_directory + data_set_number + '_%s'%(i) + '.root'
 
     tray = I3Tray()

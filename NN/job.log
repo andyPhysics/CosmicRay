@@ -768,3 +768,411 @@
 
 	Job terminated of its own accord at 2020-07-15T17:09:58Z.
 ...
+000 (59616416.000.000) 2020-07-16 11:50:34 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+000 (59616416.001.000) 2020-07-16 11:50:34 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+000 (59616416.002.000) 2020-07-16 11:50:34 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+000 (59616416.003.000) 2020-07-16 11:50:34 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+001 (59616416.001.000) 2020-07-16 11:55:54 Job executing on host: <10.128.11.42:42748?addrs=10.128.11.42-42748&alias=c9-3.icecube.wisc.edu>
+...
+001 (59616416.000.000) 2020-07-16 11:55:54 Job executing on host: <10.128.10.65:43204?addrs=10.128.10.65-43204&alias=node001.icecube.wisc.edu>
+...
+006 (59616416.000.000) 2020-07-16 11:56:03 Image size of job updated: 291232
+	181  -  MemoryUsage of job (MB)
+	185116  -  ResidentSetSize of job (KB)
+...
+006 (59616416.001.000) 2020-07-16 11:56:03 Image size of job updated: 283408
+	181  -  MemoryUsage of job (MB)
+	185120  -  ResidentSetSize of job (KB)
+...
+005 (59616416.001.000) 2020-07-16 11:56:08 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:10, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:10, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :        0        4         4 
+	   Disk (KB)             :        4  1000000   3322655 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :      181     3000      3072 
+
+	Job terminated of its own accord at 2020-07-16T16:56:08Z.
+...
+001 (59616416.002.000) 2020-07-16 11:56:09 Job executing on host: <10.128.11.42:42748?addrs=10.128.11.42-42748&alias=c9-3.icecube.wisc.edu>
+...
+005 (59616416.000.000) 2020-07-16 11:56:10 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:11, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:11, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :        0        4         4 
+	   Disk (KB)             :        4  1000000   1612470 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :      181     3000      3072 
+
+	Job terminated of its own accord at 2020-07-16T16:56:10Z.
+...
+001 (59616416.003.000) 2020-07-16 11:56:11 Job executing on host: <10.128.10.65:43204?addrs=10.128.10.65-43204&alias=node001.icecube.wisc.edu>
+...
+006 (59616416.002.000) 2020-07-16 11:56:18 Image size of job updated: 207620
+	181  -  MemoryUsage of job (MB)
+	185116  -  ResidentSetSize of job (KB)
+...
+006 (59616416.003.000) 2020-07-16 11:56:20 Image size of job updated: 291256
+	181  -  MemoryUsage of job (MB)
+	185124  -  ResidentSetSize of job (KB)
+...
+005 (59616416.002.000) 2020-07-16 11:56:21 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:10, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:10, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :        0        4         4 
+	   Disk (KB)             :        4  1000000   3322655 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :      181     3000      3072 
+
+	Job terminated of its own accord at 2020-07-16T16:56:21Z.
+...
+005 (59616416.003.000) 2020-07-16 11:56:23 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:10, Sys 0 00:00:01  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:10, Sys 0 00:00:01  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	0  -  Total Bytes Sent By Job
+	0  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :     0.05        4         4 
+	   Disk (KB)             :     4     1000000   1612470 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :   181        3000      3072 
+
+	Job terminated of its own accord at 2020-07-16T16:56:23Z.
+...
+000 (59616921.000.000) 2020-07-16 11:58:51 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+000 (59616921.001.000) 2020-07-16 11:58:51 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+000 (59616921.002.000) 2020-07-16 11:58:51 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+000 (59616921.003.000) 2020-07-16 11:58:51 Job submitted from host: <10.128.11.86:37334?addrs=10.128.11.86-37334&alias=submit-1.icecube.wisc.edu>
+...
+001 (59616921.001.000) 2020-07-16 11:59:55 Job executing on host: <10.128.10.18:45175?addrs=10.128.10.18-45175&alias=node018.icecube.wisc.edu>
+...
+001 (59616921.000.000) 2020-07-16 11:59:55 Job executing on host: <10.128.11.37:33151?addrs=10.128.11.37-33151&alias=c8-18.icecube.wisc.edu>
+...
+001 (59616921.002.000) 2020-07-16 11:59:55 Job executing on host: <10.128.11.27:57146?addrs=10.128.11.27-57146&alias=c8-8.icecube.wisc.edu>
+...
+006 (59616921.001.000) 2020-07-16 12:00:04 Image size of job updated: 266656
+	181  -  MemoryUsage of job (MB)
+	185120  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:00:04 Image size of job updated: 269952
+	181  -  MemoryUsage of job (MB)
+	185120  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:00:04 Image size of job updated: 283096
+	181  -  MemoryUsage of job (MB)
+	185112  -  ResidentSetSize of job (KB)
+...
+001 (59616921.003.000) 2020-07-16 12:00:54 Job executing on host: <10.128.10.233:35624?addrs=10.128.10.233-35624&alias=gtx-11.icecube.wisc.edu>
+...
+006 (59616921.003.000) 2020-07-16 12:01:03 Image size of job updated: 283412
+	181  -  MemoryUsage of job (MB)
+	185124  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:05:04 Image size of job updated: 275520
+	189  -  MemoryUsage of job (MB)
+	193384  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:05:04 Image size of job updated: 275732
+	189  -  MemoryUsage of job (MB)
+	192780  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:05:04 Image size of job updated: 293188
+	191  -  MemoryUsage of job (MB)
+	194800  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:06:03 Image size of job updated: 292756
+	190  -  MemoryUsage of job (MB)
+	194060  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:10:04 Image size of job updated: 279312
+	193  -  MemoryUsage of job (MB)
+	197176  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:10:04 Image size of job updated: 280624
+	194  -  MemoryUsage of job (MB)
+	197752  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:10:04 Image size of job updated: 295412
+	193  -  MemoryUsage of job (MB)
+	197024  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:11:03 Image size of job updated: 292756
+	193  -  MemoryUsage of job (MB)
+	197352  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:15:04 Image size of job updated: 279312
+	194  -  MemoryUsage of job (MB)
+	198652  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:15:05 Image size of job updated: 298756
+	196  -  MemoryUsage of job (MB)
+	200368  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:15:05 Image size of job updated: 280624
+	195  -  MemoryUsage of job (MB)
+	199280  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:16:03 Image size of job updated: 292756
+	196  -  MemoryUsage of job (MB)
+	199944  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:20:05 Image size of job updated: 302684
+	200  -  MemoryUsage of job (MB)
+	204272  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:20:05 Image size of job updated: 280340
+	199  -  MemoryUsage of job (MB)
+	203636  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:20:06 Image size of job updated: 281244
+	200  -  MemoryUsage of job (MB)
+	204060  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:21:04 Image size of job updated: 292756
+	200  -  MemoryUsage of job (MB)
+	203860  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:25:05 Image size of job updated: 305456
+	203  -  MemoryUsage of job (MB)
+	207044  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:25:06 Image size of job updated: 282164
+	201  -  MemoryUsage of job (MB)
+	205460  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:25:06 Image size of job updated: 284588
+	203  -  MemoryUsage of job (MB)
+	207488  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:26:05 Image size of job updated: 292756
+	203  -  MemoryUsage of job (MB)
+	207520  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:30:06 Image size of job updated: 285560
+	204  -  MemoryUsage of job (MB)
+	208856  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:30:06 Image size of job updated: 287956
+	206  -  MemoryUsage of job (MB)
+	210856  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:30:06 Image size of job updated: 308552
+	206  -  MemoryUsage of job (MB)
+	210140  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:31:05 Image size of job updated: 292756
+	206  -  MemoryUsage of job (MB)
+	210184  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:35:06 Image size of job updated: 290328
+	209  -  MemoryUsage of job (MB)
+	213616  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:35:07 Image size of job updated: 311692
+	209  -  MemoryUsage of job (MB)
+	213280  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:35:07 Image size of job updated: 294464
+	213  -  MemoryUsage of job (MB)
+	217400  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:36:05 Image size of job updated: 292756
+	212  -  MemoryUsage of job (MB)
+	216096  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:40:07 Image size of job updated: 317932
+	215  -  MemoryUsage of job (MB)
+	219520  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:40:07 Image size of job updated: 293180
+	212  -  MemoryUsage of job (MB)
+	216468  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:40:08 Image size of job updated: 296464
+	215  -  MemoryUsage of job (MB)
+	219380  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:41:06 Image size of job updated: 292756
+	214  -  MemoryUsage of job (MB)
+	218460  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:45:08 Image size of job updated: 295516
+	214  -  MemoryUsage of job (MB)
+	218804  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:45:08 Image size of job updated: 298984
+	217  -  MemoryUsage of job (MB)
+	221896  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:45:08 Image size of job updated: 320860
+	218  -  MemoryUsage of job (MB)
+	222448  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:46:07 Image size of job updated: 292756
+	217  -  MemoryUsage of job (MB)
+	221700  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:50:08 Image size of job updated: 298484
+	217  -  MemoryUsage of job (MB)
+	221772  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:50:08 Image size of job updated: 302060
+	221  -  MemoryUsage of job (MB)
+	225460  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:50:09 Image size of job updated: 324124
+	221  -  MemoryUsage of job (MB)
+	225712  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:51:08 Image size of job updated: 292756
+	221  -  MemoryUsage of job (MB)
+	226012  -  ResidentSetSize of job (KB)
+...
+006 (59616921.001.000) 2020-07-16 12:55:08 Image size of job updated: 300552
+	219  -  MemoryUsage of job (MB)
+	223840  -  ResidentSetSize of job (KB)
+...
+006 (59616921.000.000) 2020-07-16 12:55:09 Image size of job updated: 324124
+	224  -  MemoryUsage of job (MB)
+	228504  -  ResidentSetSize of job (KB)
+...
+006 (59616921.002.000) 2020-07-16 12:55:09 Image size of job updated: 305468
+	224  -  MemoryUsage of job (MB)
+	228724  -  ResidentSetSize of job (KB)
+...
+006 (59616921.003.000) 2020-07-16 12:56:08 Image size of job updated: 292756
+	223  -  MemoryUsage of job (MB)
+	228048  -  ResidentSetSize of job (KB)
+...
+004 (59616921.001.000) 2020-07-16 12:56:12 Job was evicted.
+	(0) CPU times
+		Usr 0 00:55:40, Sys 0 00:00:29  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :     1.00        4         4 
+	   Disk (KB)             :     4     1000000   1399813 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :   219        3000      3072 
+...
+006 (59616921.002.000) 2020-07-16 12:56:12 Image size of job updated: 305828
+	224  -  MemoryUsage of job (MB)
+	228724  -  ResidentSetSize of job (KB)
+...
+009 (59616921.001.000) 2020-07-16 12:56:12 Job was aborted.
+	via condor_rm (by user amedina)
+...
+004 (59616921.000.000) 2020-07-16 12:56:12 Job was evicted.
+	(0) CPU times
+		Usr 0 00:55:47, Sys 0 00:00:25  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :     1.00        4         4 
+	   Disk (KB)             :     4     1000000   3322655 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :   224        3000      3072 
+...
+004 (59616921.002.000) 2020-07-16 12:56:12 Job was evicted.
+	(0) CPU times
+		Usr 0 00:55:46, Sys 0 00:00:28  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :     1.00        4         4 
+	   Disk (KB)             :     4     1000000   3323623 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :   224        3000      3072 
+...
+004 (59616921.003.000) 2020-07-16 12:56:12 Job was evicted.
+	(0) CPU times
+		Usr 0 00:54:38, Sys 0 00:00:31  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+	0  -  Run Bytes Sent By Job
+	0  -  Run Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   admin_mutex_1         :                           0 
+	   admin_mutex_2         :                           0 
+	   admin_mutex_3         :                           0 
+	   Cpus                  :     1.00        4         4 
+	   Disk (KB)             :     4     1000000   1611817 
+	   GPUs                  :                           0 
+	   machine_token         :                           0 
+	   Memory (MB)           :   223        3000      3072 
+...
+009 (59616921.000.000) 2020-07-16 12:56:12 Job was aborted.
+	via condor_rm (by user amedina)
+...
+009 (59616921.002.000) 2020-07-16 12:56:12 Job was aborted.
+	via condor_rm (by user amedina)
+...
+009 (59616921.003.000) 2020-07-16 12:56:12 Job was aborted.
+	via condor_rm (by user amedina)
+...

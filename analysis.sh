@@ -7,7 +7,7 @@ notification = never
 request_cpus = 4
 request_memory = 3000
 
-+AccountingGroup="1_week.$ENV(USER)"
+#+AccountingGroup="1_week.$ENV(USER)"
 
 #arguments = $(Item)
 #Requirements = has_avx =?= true
