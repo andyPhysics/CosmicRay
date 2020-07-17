@@ -101,8 +101,8 @@ class Process_Waveforms(I3Module):
         frame['LaputopSLCVEM'] = VEM_2
         self.PushFrame(frame)
 
-def function(t,m,s,t_0):
-    y = (1/(2.*np.pi)**0.5) * (1./(s*(t-t_0))) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
+def function(t,m,s,A,t_0):
+    y = A*(1/(2.*np.pi)**0.5) * (1./(s*(t-t_0))) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
     return y
 
 def chisquare_value(observed,true,ddof = 3):
@@ -121,7 +121,7 @@ class Extract_info(I3Module):
         for i in frame['LaputopHLCWaveforms'].keys():
             key = str(i)
             waveform = np.array(frame['LaputopHLCWaveforms'][i][0].waveform)
-            time = frame['LaputopHLCVEM'][i][0].time
+            time = frame['LaputopHLCWaveforms'][i][0].time
             binwidth = frame['LaputopHLCWaveforms'][i][0].binwidth
             
             time_values = np.array([i*binwidth + time for i in range(len(waveform))])
@@ -175,16 +175,21 @@ class Extract_info(I3Module):
             check = np.array(waveform)>0
 
             check = [(i and j) and k for i,j,k in zip(check_time,check_time2,check)]
-            new_function = partial(function,t_0=time)
+            time_good = frame['LaputopHLCVEM'][i][0].time
+            new_function = partial(function,t_0=time_good)
 
             try:
-                fit = curve_fit(new_function,time_values[check],waveform[check]/np.sum(waveform[check]),bounds=((1e-10,1e-10),np.inf),p0 = [1,1],maxfev=10000)
+                fit = curve_fit(new_function,time_values[check],waveform[check]/np.sum(waveform[check]),bounds=((1e-10,1e-10,1e-10),np.inf),p0 = [1,1,1],maxfev=10000)
                 fit_status = True
             except:
                 fit_status = False
             
             if fit_status:
-                chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1]),waveform[check]/np.sum(waveform[check]),ddof=2)
+                chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2]),waveform[check]/np.sum(waveform[check]),ddof=2)
+#                print(chi2)
+#                print([(i-j)/j for i,j in zip(new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2]),waveform[check]/np.sum(waveform[check]))])
+#                print(waveform[check]/np.sum(waveform[check]))
+#                print(new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2]))
                 m = fit[0][0]
                 s = fit[0][1]
                 
