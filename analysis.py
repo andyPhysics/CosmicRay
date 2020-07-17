@@ -186,10 +186,6 @@ class Extract_info(I3Module):
             
             if fit_status:
                 chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2]),waveform[check]/np.sum(waveform[check]),ddof=2)
-#                print(chi2)
-#                print([(i-j)/j for i,j in zip(new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2]),waveform[check]/np.sum(waveform[check]))])
-#                print(waveform[check]/np.sum(waveform[check]))
-#                print(new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2]))
                 m = fit[0][0]
                 s = fit[0][1]
                 
@@ -311,9 +307,14 @@ class Get_data(I3Module):
         frame['sigma_s'] = sigma_s
         self.PushFrame(frame)
 
-def new_function(X,alpha,beta,chi,omega):
-    z,rho,m = X
-    s = alpha + (m-beta)**2 + chi * z + omega * rho**2
+def function_m(X,m_o,m_r,m_z):
+    z,rho = X
+    m = m_o + m_r * rho**2 + m_z * z
+    return m
+
+def function_s(X,s_o,s_r,s_z,s_mix):
+    z,rho = X
+    s = s_o + s_r * rho + s_z * z + s_mix * rho * z
     return s
 
 def line(x,m,b):
@@ -335,17 +336,18 @@ class Get_fit(I3Module):
         z = []
         m = []
         s = []
+        chi2 = []
         sigmas = []
         for key in frame['LaputopHLCVEM'].keys():
             omkey = str(key)
             if frame['WaveformInfo'][omkey]['chi2']!=0:
                 m.append(frame['WaveformInfo'][omkey]['m'])
                 s.append(frame['WaveformInfo'][omkey]['s'])
+                chi2.append(frame['WaveformInfo'][omkey]['chi2'])
                 position = frame['I3Geometry'].omgeo[key].position
                 x.append(position.x)
                 y.append(position.y)
                 z.append(position.z)
-                sigmas.append(frame['WaveformInfo'][omkey]['sigma_s'])
 
 
         x_new = [i-xc for i in x]
@@ -360,26 +362,53 @@ class Get_fit(I3Module):
         rho = np.array(list(zip(*vector_new))[1])
         m = np.array(m)
         s = np.array(s)
+        chi2 = np.array(chi2)
         sigmas = np.array(sigmas)
-        output_map = dataclasses.I3MapStringDouble()
+        output_map_m = dataclasses.I3MapStringDouble()
+        output_map_s = dataclasses.I3MapStringDouble()
 
+        check = (rho<225)&(rho>50)
+        #m_fit
         try:
-            fit = curve_fit(new_function,xdata=[z_corrected,rho,m],ydata=s,sigma=sigmas)
-            output_map['alpha'] = fit[0][0]
-            output_map['beta'] = fit[0][1]
-            output_map['chi'] = fit[0][2]
-            output_map['omega'] = fit[0][3]
-            chi2 = chisquare_value(new_function(np.array([z_corrected,rho,m]),fit[0][0],fit[0][1],fit[0][2],fit[0][3]),s,ddof=4)
-            output_map['chi2'] = chi2
-            output_map['fit_status'] = 1
+            fit_m = curve_fit(function_m,xdata=[z_corrected[check],rho[check]],ydata=m[check],sigma=chi2[check])
+            output_map_m['m_o'] = fit_m[0][0]
+            output_map_m['m_r'] = fit_m[0][1]
+            output_map_m['m_z'] = fit_m[0][2]
+            output_map_m['m_125'] = function_m([0,125],fit_m[0][0],fit_m[0][1],fit_m[0][2])
+            chi2_m = chisquare_value(function_m(np.array([z_corrected[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2]),m[check],ddof=4)
+            output_map_m['chi2'] = chi2_m
+            output_map_m['fit_status'] = 1
         except TypeError:
-            output_map['alpha'] = 0
-            output_map['beta'] = 0
-            output_map['chi'] = 0
-            output_map['omega'] = 0
-            output_map['chi2'] = 0
-            output_map['fit_status'] = 0
-        frame['my_fit'] = output_map
+            output_map_m['m_o'] = 0
+            output_map_m['m_r'] = 0
+            output_map_m['m_z'] = 0
+            output_map_m['m_125'] = 0
+            output_map_m['chi2'] = 0
+            output_map_m['fit_status'] = 0
+        frame['m_fit'] = output_map_m
+
+        #s_fit
+        try:
+            fit_s = curve_fit(function_s,xdata=[z_corrected[check],rho[check]],ydata=s[check],sigma=chi2[check])
+            output_map_s['s_o'] = fit_s[0][0]
+            output_map_s['s_r'] = fit_s[0][1]
+            output_map_s['s_z'] = fit_s[0][2]
+            output_map_s['s_mix'] = fit_s[0][3]
+            output_map_s['s_125'] = function_s([0,125],fit_s[0][0],fit_s[0][1],fit_s[0][2],fit_s[0][3])
+            chi2_s = chisquare_value(function_s(np.array([z_corrected[check],rho[check]]),fit_s[0][0],fit_s[0][1],fit_s[0][2],fit_s[0][3]),s[check],ddof=4)
+            output_map_s['chi2'] = chi2_s
+            output_map_s['fit_status'] = 1
+        except TypeError:
+            output_map_s['s_o'] = 0
+            output_map_s['s_r'] = 0
+            output_map_s['s_z'] = 0
+            output_map_s['s_mix'] = 0
+            output_map_s['s_125'] = 0
+            output_map_s['chi2'] = 0
+            output_map_s['fit_status'] = 0
+        frame['s_fit'] = output_map_s
+        print(frame['m_fit'])
+
 
         self.PushFrame(frame)
 
