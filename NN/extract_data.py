@@ -43,14 +43,20 @@ def process_files(input_file):
     he_stoch = []
     he_stoch2 = []
     
-    alpha = []
-    beta = []
-    chi = []
-    chi2 = []
-    omega = []
     A = []
-    fit_status = []
-    
+
+    m_125 = []
+    m_z = []
+    m_r = []
+    m_o = []
+    m_chi2 = []
+
+    s_125 = []
+    s_r = []
+    s_z = []
+    s_mix = []
+    s_o = []
+    s_chi2 = []
     
     l3_file = dataio.I3File(input_file,'r')
 
@@ -71,14 +77,22 @@ def process_files(input_file):
 
         zenith.append(l3_fr['Laputop'].dir.zenith)
         S125.append(l3_fr['LaputopParams'].value(LaputopParameter.Log10_S125))
+        m_125.append(l3_fr['m_fit']['m_125'])
+        m_o.append(l3_fr['m_fit']['m_o'])
+        m_r.append(l3_fr['m_fit']['m_r'])
+        m_z.append(l3_fr['m_fit']['m_z'])
+        m_chi2.append(l3_fr['m_fit']['chi2'])
+
+        s_125.append(l3_fr['s_fit']['s_125'])
+        s_o.append(l3_fr['s_fit']['s_o'])
+        s_r.append(l3_fr['s_fit']['s_r'])
+        s_z.append(l3_fr['s_fit']['s_z'])
+        s_mix.append(l3_fr['s_fit']['s_mix'])
+        s_chi2.append(l3_fr['s_fit']['chi2'])
+
         
         #my_variables, beta is not related to the age of the shower
-        alpha.append(l3_fr['my_fit']['alpha'])
-        beta.append(l3_fr['my_fit']['beta'])
-        chi.append(l3_fr['my_fit']['chi'])
-        chi2.append(l3_fr['my_fit']['chi2'])
-        omega.append(l3_fr['my_fit']['omega'])
-        fit_status.append(l3_fr['my_fit']['fit_status'])
+        
         A.append(l3_fr['Laputop_newParams'].value(LaputopParameter.CurvParabA))
         
     l3_file.close()
@@ -89,14 +103,20 @@ def process_files(input_file):
     our_map['energy_loss'] = energy_loss
     our_map['he_stoch'] = he_stoch
     our_map['he_stoch2'] = he_stoch2
-    our_map['alpha'] = alpha
-    our_map['beta'] = beta
-    our_map['chi'] = chi
-    our_map['chi2'] = chi2
-    our_map['omega'] = omega
     our_map['Xmax'] = Xmax
-    our_map['fit_status'] = fit_status
     our_map['A'] = A
+    our_map['m_125'] = m_125
+    our_map['m_z'] = m_z
+    our_map['m_r'] = m_r
+    our_map['m_o'] = m_o
+    our_map['m_chi2'] = m_chi2
+    our_map['s_125'] = s_125
+    our_map['s_z'] = s_z
+    our_map['s_r'] = s_r
+    our_map['s_o'] = s_o
+    our_map['s_mix'] = s_mix
+    our_map['s_chi2'] = s_chi2
+
 
     return our_map
 
