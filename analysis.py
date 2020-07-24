@@ -312,14 +312,48 @@ def function_m(X,m_o,m_r,m_z):
     m = m_o + m_r * rho**2 + m_z * z
     return m
 
-def function_s(X,s_o,s_r,s_z,s_mix):
-    z,rho = X
-    s = s_o + s_r * rho + s_z * z + s_mix * rho * z
+def function_s(m,s_o,s_1):
+    s = s_o + (m-s_1)**2
     return s
 
-def line(x,m,b):
-    s = m * x + b
-    return s
+def get_check(function,z,rho,m,chi2,check):
+    check1 = np.copy(check)
+    fit = curve_fit(function,xdata=[z[check1],rho[check1]],ydata=m[check1],sigma=np.sqrt(chi2[check1]))
+    chi2_value = chisquare_value(function(np.array([z[check1],rho[check1]]),fit[0][0],fit[0][1],fit[0][2]),m[check1],ddof=4)
+    removed = []
+    for i in range(len(check)):
+        if not check[i]:
+            removed.append(i)
+    chi2_list = []
+    chi2_list.append(chi2_value)
+    count = 0
+
+    while chi2_value > 0.1:
+        check_list = []
+        for j in range(len(check1)):
+            check_new = np.copy(check1)
+            check_new[j] = False
+            if j in removed:
+                check_list.append(-np.inf)
+                continue
+            fit = curve_fit(function,xdata=[z[check_new],rho[check_new]],ydata=m[check_new],sigma=np.sqrt(chi2[check_new]))
+            chi2_value_new = chisquare_value(function(np.array([z[check_new],rho[check_new]]),fit[0][0],fit[0][1],fit[0][2]),m[check_new],ddof=4)
+            check_list.append(chi2_value_new*(chi2[j]))
+
+        check1[np.argmax(check_list)] = False
+        removed.append(np.argmax(check_list))
+        fit = curve_fit(function,xdata=[z[check1],rho[check1]],ydata=m[check1],sigma=np.sqrt(chi2[check1]))
+        chi2_value = chisquare_value(function(np.array([z[check1],rho[check1]]),fit[0][0],fit[0][1],fit[0][2]),m[check1],ddof=4)
+        chi2_list.append(chi2_value)
+
+        if count > 1:
+            if abs(chi2_list[-1]-chi2_list[-2])<0.01:
+                break
+        count+=1
+    return check1
+
+
+from functools import partial
 
 class Get_fit(I3Module):
     def __init__(self, context):
@@ -338,6 +372,7 @@ class Get_fit(I3Module):
         s = []
         chi2 = []
         sigmas = []
+        VEM = []
         for key in frame['LaputopHLCVEM'].keys():
             omkey = str(key)
             if frame['WaveformInfo'][omkey]['chi2']!=0:
@@ -348,6 +383,7 @@ class Get_fit(I3Module):
                 x.append(position.x)
                 y.append(position.y)
                 z.append(position.z)
+                VEM.append(frame['LaputopHLCVEM'][key][0].charge)
 
 
         x_new = [i-xc for i in x]
@@ -357,28 +393,36 @@ class Get_fit(I3Module):
         vector = [[i,j,k] for i,j,k in zip(x_new,y_new,z_new)]
 
         vector_new =[new_vector(i,azimuth,zenith) for i in vector]
-
-        z_corrected = np.array(list(zip(*vector_new))[0])
-        rho = np.array(list(zip(*vector_new))[1])
+        
+        try:
+            z_corrected = np.array(list(zip(*vector_new))[0])
+            rho = np.array(list(zip(*vector_new))[1])
+        except IndexError:
+            z_corrected = np.array([])
+            rho = np.array([])
+            print('something is wrong here')
+            print(vector_new)
         m = np.array(m)
         s = np.array(s)
         chi2 = np.array(chi2)
         sigmas = np.array(sigmas)
+        VEM = np.array(VEM)
         output_map_m = dataclasses.I3MapStringDouble()
         output_map_s = dataclasses.I3MapStringDouble()
-
-        check = (rho<225)&(rho>50)
+        check = (np.log10(VEM)>0.5)&(rho<300)
         #m_fit
         try:
-            fit_m = curve_fit(function_m,xdata=[z_corrected[check],rho[check]],ydata=m[check],sigma=chi2[check])
+            check = get_check(function_m,z_corrected,rho,m,chi2,check)
+            fit_m = curve_fit(function_m,xdata=[z_corrected[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]))
             output_map_m['m_o'] = fit_m[0][0]
             output_map_m['m_r'] = fit_m[0][1]
             output_map_m['m_z'] = fit_m[0][2]
             output_map_m['m_125'] = function_m([0,125],fit_m[0][0],fit_m[0][1],fit_m[0][2])
             chi2_m = chisquare_value(function_m(np.array([z_corrected[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2]),m[check],ddof=4)
+            print('chi2_m: ',chi2_m)
             output_map_m['chi2'] = chi2_m
             output_map_m['fit_status'] = 1
-        except TypeError:
+        except (TypeError,RuntimeError) as err:
             output_map_m['m_o'] = 0
             output_map_m['m_r'] = 0
             output_map_m['m_z'] = 0
@@ -389,25 +433,23 @@ class Get_fit(I3Module):
 
         #s_fit
         try:
-            fit_s = curve_fit(function_s,xdata=[z_corrected[check],rho[check]],ydata=s[check],sigma=chi2[check])
+            fit_s = curve_fit(function_s,xdata=m[check],ydata=s[check],sigma=np.sqrt(chi2[check]))
             output_map_s['s_o'] = fit_s[0][0]
-            output_map_s['s_r'] = fit_s[0][1]
-            output_map_s['s_z'] = fit_s[0][2]
-            output_map_s['s_mix'] = fit_s[0][3]
-            output_map_s['s_125'] = function_s([0,125],fit_s[0][0],fit_s[0][1],fit_s[0][2],fit_s[0][3])
-            chi2_s = chisquare_value(function_s(np.array([z_corrected[check],rho[check]]),fit_s[0][0],fit_s[0][1],fit_s[0][2],fit_s[0][3]),s[check],ddof=4)
+            output_map_s['s_1'] = fit_s[0][1]
+            output_map_s['s_mean'] = np.mean(s[check])
+            output_map_s['s_std'] = np.std(s[check])
+            chi2_s = chisquare_value(function_s(m[check],fit_s[0][0],fit_s[0][1]),s[check],ddof=4)
             output_map_s['chi2'] = chi2_s
             output_map_s['fit_status'] = 1
-        except TypeError:
+            print('chi2_s: ',chi2_s)
+        except (TypeError,RuntimeError) as err:
             output_map_s['s_o'] = 0
-            output_map_s['s_r'] = 0
-            output_map_s['s_z'] = 0
-            output_map_s['s_mix'] = 0
-            output_map_s['s_125'] = 0
+            output_map_s['s_1'] = 0
+            output_map_s['s_mean'] = 0
+            output_map_s['s_std'] = 0
             output_map_s['chi2'] = 0
             output_map_s['fit_status'] = 0
         frame['s_fit'] = output_map_s
-        print(frame['m_fit'])
 
 
         self.PushFrame(frame)
