@@ -51,11 +51,10 @@ def process_files(input_file):
     m_o = []
     m_chi2 = []
 
-    s_125 = []
-    s_r = []
-    s_z = []
-    s_mix = []
     s_o = []
+    s_1 = []
+    s_mean = []
+    s_std = []
     s_chi2 = []
     
     l3_file = dataio.I3File(input_file,'r')
@@ -83,11 +82,10 @@ def process_files(input_file):
         m_z.append(l3_fr['m_fit']['m_z'])
         m_chi2.append(l3_fr['m_fit']['chi2'])
 
-        s_125.append(l3_fr['s_fit']['s_125'])
         s_o.append(l3_fr['s_fit']['s_o'])
-        s_r.append(l3_fr['s_fit']['s_r'])
-        s_z.append(l3_fr['s_fit']['s_z'])
-        s_mix.append(l3_fr['s_fit']['s_mix'])
+        s_1.append(l3_fr['s_fit']['s_1'])
+        s_mean.append(l3_fr['s_fit']['s_mean'])
+        s_std.append(l3_fr['s_fit']['s_std'])
         s_chi2.append(l3_fr['s_fit']['chi2'])
 
         
@@ -110,11 +108,10 @@ def process_files(input_file):
     our_map['m_r'] = m_r
     our_map['m_o'] = m_o
     our_map['m_chi2'] = m_chi2
-    our_map['s_125'] = s_125
-    our_map['s_z'] = s_z
-    our_map['s_r'] = s_r
     our_map['s_o'] = s_o
-    our_map['s_mix'] = s_mix
+    our_map['s_1'] = s_1
+    our_map['s_mean'] = s_mean
+    our_map['s_std'] = s_std
     our_map['s_chi2'] = s_chi2
 
 

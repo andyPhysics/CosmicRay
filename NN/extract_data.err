@@ -1,6 +1,0 @@
-Traceback (most recent call last):
-  File "/home/amedina/CosmicRay.git/trunk/NN/extract_data.py", line 130, in <module>
-    event = process_files(i)
-  File "/home/amedina/CosmicRay.git/trunk/NN/extract_data.py", line 64, in process_files
-    l3_fr = l3_file.pop_physics() #This gets the frame
-RuntimeError: bzip2 error: iostream error
