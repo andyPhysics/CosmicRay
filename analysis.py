@@ -101,15 +101,15 @@ class Process_Waveforms(I3Module):
         frame['LaputopSLCVEM'] = VEM_2
         self.PushFrame(frame)
 
-def function(t,m,s,t_0):
-    y = (1/(2.*np.pi)**0.5) * (1./(s*(t-t_0))) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
-    return np.log(y)
+def function(t,m,s,A,t_0):
+    y = A * (1/(2.*np.pi)**0.5) * (1./(s*(t-t_0))) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
+    return y
 
 def chisquare_value(observed,true,std=[],ddof = 3):
     if len(std)!= 0:
         chi2 = np.sum([((i-j)**2.0)/k**2 for i,j,k in zip(observed,true,std)])
     else:
-        chi2 = np.sum([(i-j)**2 for i,j in zip(observed,true)])
+        chi2 = np.sum([((i-j)**2)/abs(j) for i,j in zip(observed,true)])
 
     return chi2/(len(observed)-1-ddof)
 
@@ -183,13 +183,19 @@ class Extract_info(I3Module):
             new_function = partial(function,t_0=time_good)
 
             try:
-                fit = curve_fit(new_function,time_values[check],np.log(waveform[check]/np.sum(waveform[check])),bounds=((1e-10,1e-10),np.inf),p0 = [1,1],maxfev=10000)
+                fit = curve_fit(new_function,time_values[check],waveform[check]/np.sum(waveform[check]),bounds=((1e-10,1e-10,1e-10),np.inf),p0 = [1,1,1],maxfev=10000)
                 fit_status = True
             except:
                 fit_status = False
             
             if fit_status:
-                chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1]),np.log(waveform[check]/np.sum(waveform[check])),ddof=2)
+                chi2 = chisquare_value(waveform[check]/np.sum(waveform[check]),new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2]),ddof=3)
+                stuff = {}
+                stuff['time'] = time_values[check]
+                stuff['waveform1'] = waveform[check]/np.sum(waveform[check])
+                stuff['waveform2'] = new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2])
+                np.save('waveform_check',stuff)
+                print(chi2)
                 m = fit[0][0]
                 s = fit[0][1]
                 
@@ -349,7 +355,6 @@ def get_check(function,z,rho,m,chi2,check,std):
         fit = curve_fit(function,xdata=[z[check1],rho[check1]],ydata=m[check1],sigma=np.sqrt(chi2[check1]))
         chi2_value = chisquare_value(function(np.array([z[check1],rho[check1]]),fit[0][0],fit[0][1],fit[0][2]),m[check1],ddof=3,std=list(std[check1]))
         chi2_list.append(chi2_value)
-        print(chi2_value)
 
         if np.sum(check1)-1-3 == 1:
             break
