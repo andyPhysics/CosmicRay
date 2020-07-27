@@ -101,13 +101,17 @@ class Process_Waveforms(I3Module):
         frame['LaputopSLCVEM'] = VEM_2
         self.PushFrame(frame)
 
-def function(t,m,s,A,t_0):
-    y = A*(1/(2.*np.pi)**0.5) * (1./(s*(t-t_0))) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
-    return y
+def function(t,m,s,t_0):
+    y = (1/(2.*np.pi)**0.5) * (1./(s*(t-t_0))) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
+    return np.log(y)
 
-def chisquare_value(observed,true,ddof = 3):
-    chi2 = np.sum([((i-j)**2.0)/abs(j) for i,j in zip(observed,true)])
-    return chi2
+def chisquare_value(observed,true,std=[],ddof = 3):
+    if len(std)!= 0:
+        chi2 = np.sum([((i-j)**2.0)/k**2 for i,j,k in zip(observed,true,std)])
+    else:
+        chi2 = np.sum([(i-j)**2 for i,j in zip(observed,true)])
+
+    return chi2/(len(observed)-1-ddof)
 
 from scipy.optimize import curve_fit
 
@@ -179,13 +183,13 @@ class Extract_info(I3Module):
             new_function = partial(function,t_0=time_good)
 
             try:
-                fit = curve_fit(new_function,time_values[check],waveform[check]/np.sum(waveform[check]),bounds=((1e-10,1e-10,1e-10),np.inf),p0 = [1,1,1],maxfev=10000)
+                fit = curve_fit(new_function,time_values[check],np.log(waveform[check]/np.sum(waveform[check])),bounds=((1e-10,1e-10),np.inf),p0 = [1,1],maxfev=10000)
                 fit_status = True
             except:
                 fit_status = False
             
             if fit_status:
-                chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2]),waveform[check]/np.sum(waveform[check]),ddof=2)
+                chi2 = chisquare_value(new_function(time_values[check],fit[0][0],fit[0][1]),np.log(waveform[check]/np.sum(waveform[check])),ddof=2)
                 m = fit[0][0]
                 s = fit[0][1]
                 
@@ -316,10 +320,10 @@ def function_s(m,s_o,s_1):
     s = s_o + (m-s_1)**2
     return s
 
-def get_check(function,z,rho,m,chi2,check):
+def get_check(function,z,rho,m,chi2,check,std):
     check1 = np.copy(check)
     fit = curve_fit(function,xdata=[z[check1],rho[check1]],ydata=m[check1],sigma=np.sqrt(chi2[check1]))
-    chi2_value = chisquare_value(function(np.array([z[check1],rho[check1]]),fit[0][0],fit[0][1],fit[0][2]),m[check1],ddof=4)
+    chi2_value = chisquare_value(function(np.array([z[check1],rho[check1]]),fit[0][0],fit[0][1],fit[0][2]),m[check1],ddof=3,std = list(std[check1]))
     removed = []
     for i in range(len(check)):
         if not check[i]:
@@ -328,7 +332,7 @@ def get_check(function,z,rho,m,chi2,check):
     chi2_list.append(chi2_value)
     count = 0
 
-    while chi2_value > 0.1:
+    while chi2_value > 2:
         check_list = []
         for j in range(len(check1)):
             check_new = np.copy(check1)
@@ -337,14 +341,18 @@ def get_check(function,z,rho,m,chi2,check):
                 check_list.append(-np.inf)
                 continue
             fit = curve_fit(function,xdata=[z[check_new],rho[check_new]],ydata=m[check_new],sigma=np.sqrt(chi2[check_new]))
-            chi2_value_new = chisquare_value(function(np.array([z[check_new],rho[check_new]]),fit[0][0],fit[0][1],fit[0][2]),m[check_new],ddof=4)
+            chi2_value_new = chisquare_value(function(np.array([z[check_new],rho[check_new]]),fit[0][0],fit[0][1],fit[0][2]),m[check_new],ddof=3,std=list(std[check_new]))
             check_list.append(chi2_value_new*(chi2[j]))
 
         check1[np.argmax(check_list)] = False
         removed.append(np.argmax(check_list))
         fit = curve_fit(function,xdata=[z[check1],rho[check1]],ydata=m[check1],sigma=np.sqrt(chi2[check1]))
-        chi2_value = chisquare_value(function(np.array([z[check1],rho[check1]]),fit[0][0],fit[0][1],fit[0][2]),m[check1],ddof=4)
+        chi2_value = chisquare_value(function(np.array([z[check1],rho[check1]]),fit[0][0],fit[0][1],fit[0][2]),m[check1],ddof=3,std=list(std[check1]))
         chi2_list.append(chi2_value)
+        print(chi2_value)
+
+        if np.sum(check1)-1-3 == 1:
+            break
 
         if count > 1:
             if abs(chi2_list[-1]-chi2_list[-2])<0.01:
@@ -372,6 +380,7 @@ class Get_fit(I3Module):
         s = []
         chi2 = []
         sigmas = []
+        sigmam = []
         VEM = []
         for key in frame['LaputopHLCVEM'].keys():
             omkey = str(key)
@@ -384,6 +393,8 @@ class Get_fit(I3Module):
                 y.append(position.y)
                 z.append(position.z)
                 VEM.append(frame['LaputopHLCVEM'][key][0].charge)
+                sigmas.append(frame['WaveformInfo'][omkey]['sigma_s'])
+                sigmam.append(frame['WaveformInfo'][omkey]['sigma_m'])
 
 
         x_new = [i-xc for i in x]
@@ -406,19 +417,21 @@ class Get_fit(I3Module):
         s = np.array(s)
         chi2 = np.array(chi2)
         sigmas = np.array(sigmas)
+        sigmam = np.array(sigmam)
         VEM = np.array(VEM)
         output_map_m = dataclasses.I3MapStringDouble()
         output_map_s = dataclasses.I3MapStringDouble()
         check = (np.log10(VEM)>0.5)&(rho<300)
         #m_fit
         try:
-            check = get_check(function_m,z_corrected,rho,m,chi2,check)
+            if np.sum(check) -1-3 > 1:
+                check = get_check(function_m,z_corrected,rho,m,chi2,check,std=sigmam)
             fit_m = curve_fit(function_m,xdata=[z_corrected[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]))
             output_map_m['m_o'] = fit_m[0][0]
             output_map_m['m_r'] = fit_m[0][1]
             output_map_m['m_z'] = fit_m[0][2]
             output_map_m['m_125'] = function_m([0,125],fit_m[0][0],fit_m[0][1],fit_m[0][2])
-            chi2_m = chisquare_value(function_m(np.array([z_corrected[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2]),m[check],ddof=4)
+            chi2_m = chisquare_value(function_m(np.array([z_corrected[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2]),m[check],ddof=3,std=sigmam[check])
             print('chi2_m: ',chi2_m)
             output_map_m['chi2'] = chi2_m
             output_map_m['fit_status'] = 1
@@ -438,7 +451,7 @@ class Get_fit(I3Module):
             output_map_s['s_1'] = fit_s[0][1]
             output_map_s['s_mean'] = np.mean(s[check])
             output_map_s['s_std'] = np.std(s[check])
-            chi2_s = chisquare_value(function_s(m[check],fit_s[0][0],fit_s[0][1]),s[check],ddof=4)
+            chi2_s = chisquare_value(function_s(m[check],fit_s[0][0],fit_s[0][1]),s[check],ddof=2,std=sigmas[check])
             output_map_s['chi2'] = chi2_s
             output_map_s['fit_status'] = 1
             print('chi2_s: ',chi2_s)
