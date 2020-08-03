@@ -36,6 +36,7 @@ def process_files(input_file):
     mass = []
     energy = []
     Xmax = []
+    Xo = []
 
     zenith = []
     S125 = []
@@ -73,6 +74,7 @@ def process_files(input_file):
         mass.append(4)
         energy.append(l3_fr['MCPrimary'].energy)
         Xmax.append(l3_fr['MCPrimaryInfo'].ghMaxDepth)
+        Xo.append(l3_fr['MCPrimaryInfo'].ghStartDepth)
 
         zenith.append(l3_fr['Laputop'].dir.zenith)
         S125.append(l3_fr['LaputopParams'].value(LaputopParameter.Log10_S125))
@@ -102,6 +104,7 @@ def process_files(input_file):
     our_map['he_stoch'] = he_stoch
     our_map['he_stoch2'] = he_stoch2
     our_map['Xmax'] = Xmax
+    our_map['Xo'] = Xo
     our_map['A'] = A
     our_map['m_125'] = m_125
     our_map['m_z'] = m_z
