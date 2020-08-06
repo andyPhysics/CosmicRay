@@ -2,3 +2,9 @@
 12362 /home/amedina/CosmicRay.git/trunk/NN/Iron.csv
 12630 /home/amedina/CosmicRay.git/trunk/NN/Helium.csv
 12631 /home/amedina/CosmicRay.git/trunk/NN/Oxygen.csv
+12632 /home/amedina/CosmicRay.git/trunk/NN/Proton2.csv
+12633 /home/amedina/CosmicRay.git/trunk/NN/Iron2.csv
+12634 /home/amedina/CosmicRay.git/trunk/NN/Proton3.csv
+12635 /home/amedina/CosmicRay.git/trunk/NN/Iron3.csv
+12636 /home/amedina/CosmicRay.git/trunk/NN/Proton4.csv
+12637 /home/amedina/CosmicRay.git/trunk/NN/Iron4.csv
