@@ -57,6 +57,9 @@ def process_files(input_file):
     s_mean = []
     s_std = []
     s_chi2 = []
+
+    charge = []
+    N = []
     
     l3_file = dataio.I3File(input_file,'r')
 
@@ -90,6 +93,17 @@ def process_files(input_file):
         s_std.append(l3_fr['s_fit']['s_std'])
         s_chi2.append(l3_fr['s_fit']['chi2'])
 
+        count = 0
+        qtot = 0
+        for i in l3_fr['LaputopHLCVEM'].keys():
+            if np.isnan(l3_fr['LaputopHLCVEM'][i][0].charge):
+                continue
+            else:
+                count+=1
+                qtot+=l3_fr['LaputopHLCVEM'][i][0].charge
+            
+        charge.append(qtot)
+        N.append(count)
         
         #my_variables, beta is not related to the age of the shower
         
@@ -116,6 +130,8 @@ def process_files(input_file):
     our_map['s_mean'] = s_mean
     our_map['s_std'] = s_std
     our_map['s_chi2'] = s_chi2
+    our_map['charge'] = charge
+    our_map['N'] = N
 
 
     return our_map
