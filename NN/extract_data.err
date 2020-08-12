@@ -1,0 +1,24 @@
+/home/amedina/CosmicRay.git/trunk/NN/extract_data.py:40: RuntimeWarning: divide by zero encountered in log
+  return np.log(n)
+/cvmfs/icecube.opensciencegrid.org/py3-v4.0.1/RHEL_7_x86_64/lib/python3.6/site-packages/scipy/optimize/minpack.py:794: OptimizeWarning: Covariance of the parameters could not be estimated
+  category=OptimizeWarning)
+/home/amedina/CosmicRay.git/trunk/NN/extract_data.py:39: RuntimeWarning: overflow encountered in exp
+  n = ((x/m)**m) * np.exp(m-x)
+/home/amedina/CosmicRay.git/trunk/NN/extract_data.py:39: RuntimeWarning: invalid value encountered in multiply
+  n = ((x/m)**m) * np.exp(m-x)
+/home/amedina/CosmicRay.git/trunk/NN/extract_data.py:39: RuntimeWarning: overflow encountered in power
+  n = ((x/m)**m) * np.exp(m-x)
+/home/amedina/CosmicRay.git/trunk/NN/extract_data.py:39: RuntimeWarning: invalid value encountered in power
+  n = ((x/m)**m) * np.exp(m-x)
+/home/amedina/CosmicRay.git/trunk/NN/extract_data.py:40: RuntimeWarning: divide by zero encountered in log
+  return np.log(n)
+/cvmfs/icecube.opensciencegrid.org/py3-v4.0.1/RHEL_7_x86_64/lib/python3.6/site-packages/scipy/optimize/minpack.py:794: OptimizeWarning: Covariance of the parameters could not be estimated
+  category=OptimizeWarning)
+/home/amedina/CosmicRay.git/trunk/NN/extract_data.py:39: RuntimeWarning: overflow encountered in exp
+  n = ((x/m)**m) * np.exp(m-x)
+/home/amedina/CosmicRay.git/trunk/NN/extract_data.py:39: RuntimeWarning: invalid value encountered in multiply
+  n = ((x/m)**m) * np.exp(m-x)
+/home/amedina/CosmicRay.git/trunk/NN/extract_data.py:39: RuntimeWarning: overflow encountered in power
+  n = ((x/m)**m) * np.exp(m-x)
+/home/amedina/CosmicRay.git/trunk/NN/extract_data.py:39: RuntimeWarning: invalid value encountered in power
+  n = ((x/m)**m) * np.exp(m-x)

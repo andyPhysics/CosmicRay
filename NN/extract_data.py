@@ -21,6 +21,8 @@ import multiprocessing as mp
 from icecube.tableio import I3TableWriter
 from icecube.rootwriter import I3ROOTTableService
 
+from scipy.optimize import curve_fit
+
 import numpy as np
 import pandas as pd
 from glob import glob
@@ -30,6 +32,19 @@ number = sys.argv[1]
 my_list = glob(directory + '/%s_*.i3.bz2'%(number))
 output_file = sys.argv[2]
 print(my_list)
+
+def gh_function(depth,Xo,Xmax,lambda_value):
+    x = (depth-Xo)/lambda_value
+    m = (Xmax-Xo)/lambda_value
+    n = ((x/m)**m) * np.exp(m-x)
+    return np.log(n)
+
+def get_chi2(x_true,x_predicted):
+    x_predicted = np.array(x_predicted)
+    x_true = np.array(x_true)
+    check = x_predicted>0
+    chi2 = np.sum([((i-j)**2)/j for i,j in zip(x_true[check],x_predicted[check])])
+    return chi2
 
 def process_files(input_file):
     our_map = {}
@@ -60,6 +75,16 @@ def process_files(input_file):
 
     charge = []
     N = []
+    ghredchi = []
+    firstint = []
+    max_check = []
+
+    new_xmax = []
+    new_xo = []
+    new_lambda = []
+    fit_status = []
+    chi2 = []
+    difference = []
     
     l3_file = dataio.I3File(input_file,'r')
 
@@ -78,6 +103,40 @@ def process_files(input_file):
         energy.append(l3_fr['MCPrimary'].energy)
         Xmax.append(l3_fr['MCPrimaryInfo'].ghMaxDepth)
         Xo.append(l3_fr['MCPrimaryInfo'].ghStartDepth)
+        firstint.append(l3_fr['MCPrimaryInfo'].firstIntDepth)
+        ghredchi.append(l3_fr['MCPrimaryInfo'].ghRedChiSqr)
+        depth = []
+        value = []
+        for i in l3_fr['MCPrimaryInfo'].longProfile:
+            depth.append(i.depth)
+            value.append(i.numEMinus+i.numEPlus)
+
+        max_check.append(depth[np.argmax(value)]-l3_fr['MCPrimaryInfo'].ghMaxDepth)
+
+
+        value = np.array(value)
+        depth = np.array(depth)
+        try:
+            fit = curve_fit(gh_function,xdata=depth[value>0],ydata=np.log(value[value>0]/max(value)),p0 = [1,depth[value>0][np.argmax(value[value>0])],2])
+            new_xmax.append(fit[0][1])
+            new_xo.append(fit[0][0])
+            new_lambda.append(fit[0][2])
+            if np.isfinite(fit[1][0][0]):
+                fit_status.append(1)
+            else:
+                fit_status.append(0)
+            chi2_value = get_chi2(gh_function(depth[value>0],fit[0][0],fit[0][1],fit[0][2]),np.log(value[value>0]/max(value)))
+            chi2.append(chi2_value)
+            difference.append(fit[0][1]-depth[np.argmax(value)])
+
+        except (ValueError,RuntimeError) as err:
+            new_xmax.append(0)
+            new_xo.append(0)
+            new_lambda.append(0)
+            fit_status.append(0)
+            chi2.append(0)
+            difference.append(0)
+
 
         zenith.append(l3_fr['Laputop'].dir.zenith)
         S125.append(l3_fr['LaputopParams'].value(LaputopParameter.Log10_S125))
@@ -132,6 +191,15 @@ def process_files(input_file):
     our_map['s_chi2'] = s_chi2
     our_map['charge'] = charge
     our_map['N'] = N
+    our_map['ghRedChiSqr'] = ghredchi
+    our_map['firstint'] = firstint
+    our_map['max_check'] = max_check
+    our_map['new_xmax'] = new_xmax
+    our_map['new_xo'] = new_xo
+    our_map['new_lambda'] = new_lambda
+    our_map['fit_status'] = fit_status
+    our_map['new_chi2'] = chi2
+    our_map['difference'] = difference
 
 
     return our_map

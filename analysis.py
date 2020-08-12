@@ -105,13 +105,10 @@ def function(t,m,s,A,t_0):
     y = A * (1/(2.*np.pi)**0.5) * (1./(s*(t-t_0))) * np.exp(-(np.log(t-t_0)-m)**2.0/(2.*s**2.0))
     return y
 
-def chisquare_value(observed,true,std=[],ddof = 3):
-    if len(std)!= 0:
-        chi2 = np.sum([((i-j)**2.0)/k**2 for i,j,k in zip(observed,true,std)])
-    else:
-        chi2 = np.sum([((i-j)**2)/abs(j) for i,j in zip(observed,true)])
+def chisquare_value(observed,true):
+    chi2 = np.sum([((i-j)**2)/abs(j) for i,j in zip(observed,true)])
 
-    return chi2/(len(observed)-1-ddof)
+    return chi2
 
 from scipy.optimize import curve_fit
 
@@ -189,13 +186,7 @@ class Extract_info(I3Module):
                 fit_status = False
             
             if fit_status:
-                chi2 = chisquare_value(waveform[check]/np.sum(waveform[check]),new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2]),ddof=3)
-                stuff = {}
-                stuff['time'] = time_values[check]
-                stuff['waveform1'] = waveform[check]/np.sum(waveform[check])
-                stuff['waveform2'] = new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2])
-                np.save('waveform_check',stuff)
-                print(chi2)
+                chi2 = chisquare_value(waveform[check]/np.sum(waveform[check]),new_function(time_values[check],fit[0][0],fit[0][1],fit[0][2]))
                 m = fit[0][0]
                 s = fit[0][1]
                 
@@ -319,54 +310,12 @@ class Get_data(I3Module):
 
 def function_m(X,m_o,m_r,m_z):
     z,rho = X
-    m = m_o + m_r * rho**2 + m_z * z
+    m = m_o + m_r * rho**2# + m_z * z
     return m
 
 def function_s(m,s_o,s_1):
     s = s_o + (m-s_1)**2
     return s
-
-def get_check(function,z,rho,m,chi2,check,std):
-    check1 = np.copy(check)
-    fit = curve_fit(function,xdata=[z[check1],rho[check1]],ydata=m[check1],sigma=np.sqrt(chi2[check1]))
-    chi2_value = chisquare_value(function(np.array([z[check1],rho[check1]]),fit[0][0],fit[0][1],fit[0][2]),m[check1],ddof=3,std = list(std[check1]))
-    removed = []
-    for i in range(len(check)):
-        if not check[i]:
-            removed.append(i)
-    chi2_list = []
-    chi2_list.append(chi2_value)
-    count = 0
-
-    while chi2_value > 2:
-        check_list = []
-        for j in range(len(check1)):
-            check_new = np.copy(check1)
-            check_new[j] = False
-            if j in removed:
-                check_list.append(-np.inf)
-                continue
-            fit = curve_fit(function,xdata=[z[check_new],rho[check_new]],ydata=m[check_new],sigma=np.sqrt(chi2[check_new]))
-            chi2_value_new = chisquare_value(function(np.array([z[check_new],rho[check_new]]),fit[0][0],fit[0][1],fit[0][2]),m[check_new],ddof=3,std=list(std[check_new]))
-            check_list.append(chi2_value_new*(chi2[j]))
-
-        check1[np.argmax(check_list)] = False
-        removed.append(np.argmax(check_list))
-        fit = curve_fit(function,xdata=[z[check1],rho[check1]],ydata=m[check1],sigma=np.sqrt(chi2[check1]))
-        chi2_value = chisquare_value(function(np.array([z[check1],rho[check1]]),fit[0][0],fit[0][1],fit[0][2]),m[check1],ddof=3,std=list(std[check1]))
-        chi2_list.append(chi2_value)
-
-        if np.sum(check1)-1-3 == 1:
-            break
-
-        if count > 1:
-            if abs(chi2_list[-1]-chi2_list[-2])<0.01:
-                break
-        count+=1
-    return check1
-
-
-from functools import partial
 
 class Get_fit(I3Module):
     def __init__(self, context):
@@ -426,21 +375,37 @@ class Get_fit(I3Module):
         VEM = np.array(VEM)
         output_map_m = dataclasses.I3MapStringDouble()
         output_map_s = dataclasses.I3MapStringDouble()
-        check = (np.log10(VEM)>0.5)&(rho<300)
         #m_fit
         try:
-            if np.sum(check) -1-3 > 1:
-                check = get_check(function_m,z_corrected,rho,m,chi2,check,std=sigmam)
-            fit_m = curve_fit(function_m,xdata=[z_corrected[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]))
+            value = []
+            value2 = []
+            list_values = [240,260,280,300,320,340,360,380,380,400]
+            charge_values = [0,0.25,0.5]
+            for charge_value in charge_values:
+                check = (np.log10(VEM)>charge_value)&(rho<300)
+                fit_m = curve_fit(function_m,xdata=[z_corrected[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]),bounds=((1e-10,1e-10,1e-10),np.inf))
+                chi2_m = chisquare_value(m[check],function_m(np.array([z_corrected[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2]))
+                value2.append(abs(chi2_m))
+            min_charge = charge_values[np.argmin(value2)]
+
+            for max_value in list_values:
+                check = (np.log10(VEM)>min_charge)&(rho<max_value)
+                fit_m = curve_fit(function_m,xdata=[z_corrected[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]),bounds=((1e-10,1e-10,1e-10),np.inf))
+                chi2_m = chisquare_value(m[check],function_m(np.array([z_corrected[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2]))
+                value.append(abs(chi2_m))
+
+            check = (np.log10(VEM)>min_charge)&(rho<list_values[np.argmin(value)])
+            fit_m = curve_fit(function_m,xdata=[z_corrected[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]),bounds=((1e-10,1e-10,1e-10),np.inf))
+            
             output_map_m['m_o'] = fit_m[0][0]
             output_map_m['m_r'] = fit_m[0][1]
             output_map_m['m_z'] = fit_m[0][2]
             output_map_m['m_125'] = function_m([0,125],fit_m[0][0],fit_m[0][1],fit_m[0][2])
-            chi2_m = chisquare_value(function_m(np.array([z_corrected[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2]),m[check],ddof=3,std=sigmam[check])
+            chi2_m = chisquare_value(m[check],function_m(np.array([z_corrected[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2]))
             print('chi2_m: ',chi2_m)
             output_map_m['chi2'] = chi2_m
             output_map_m['fit_status'] = 1
-        except (TypeError,RuntimeError) as err:
+        except (ValueError,TypeError,RuntimeError) as err:
             output_map_m['m_o'] = 0
             output_map_m['m_r'] = 0
             output_map_m['m_z'] = 0
@@ -451,16 +416,16 @@ class Get_fit(I3Module):
 
         #s_fit
         try:
-            fit_s = curve_fit(function_s,xdata=m[check],ydata=s[check],sigma=np.sqrt(chi2[check]))
+            fit_s = curve_fit(function_s,xdata=m[check],ydata=s[check],sigma=np.sqrt(chi2[check]),bounds=((1e-10,1e-10),np.inf))
             output_map_s['s_o'] = fit_s[0][0]
             output_map_s['s_1'] = fit_s[0][1]
             output_map_s['s_mean'] = np.mean(s[check])
             output_map_s['s_std'] = np.std(s[check])
-            chi2_s = chisquare_value(function_s(m[check],fit_s[0][0],fit_s[0][1]),s[check],ddof=2,std=sigmas[check])
+            chi2_s = chisquare_value(s[check],function_s(m[check],fit_s[0][0],fit_s[0][1]))
             output_map_s['chi2'] = chi2_s
             output_map_s['fit_status'] = 1
             print('chi2_s: ',chi2_s)
-        except (TypeError,RuntimeError) as err:
+        except (ValueError,TypeError,RuntimeError) as err:
             output_map_s['s_o'] = 0
             output_map_s['s_1'] = 0
             output_map_s['s_mean'] = 0
