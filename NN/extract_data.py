@@ -42,8 +42,7 @@ def gh_function(depth,Xo,Xmax,lambda_value):
 def get_chi2(x_true,x_predicted):
     x_predicted = np.array(x_predicted)
     x_true = np.array(x_true)
-    check = x_predicted>0
-    chi2 = np.sum([((i-j)**2)/j for i,j in zip(x_true[check],x_predicted[check])])
+    chi2 = np.sum([((i-j)**2)/abs(j) for i,j in zip(x_true,x_predicted)])
     return chi2
 
 def process_files(input_file):
@@ -51,6 +50,7 @@ def process_files(input_file):
     mass = []
     energy = []
     Xmax = []
+    MaxNum = []
     Xo = []
 
     zenith = []
@@ -62,16 +62,20 @@ def process_files(input_file):
     A = []
 
     m_125 = []
-    m_z = []
+    m_s2 = []
+    m_s = []
     m_r = []
     m_o = []
     m_chi2 = []
+    fit_status_m = []
 
+    s_r = []
     s_o = []
-    s_1 = []
+    s_chi2 = []
+    fit_status_s = []
+
     s_mean = []
     s_std = []
-    s_chi2 = []
 
     charge = []
     N = []
@@ -85,11 +89,17 @@ def process_files(input_file):
     fit_status = []
     chi2 = []
     difference = []
+
+    waveform_weight = []
     
     l3_file = dataio.I3File(input_file,'r')
 
     while l3_file.more():
         l3_fr = l3_file.pop_physics() #This gets the frame
+        check = l3_fr['IT73AnalysisInIceQualityCuts'].values()
+        if np.sum(check)/len(check) != 1:
+            continue
+
         if 'Millipede_dEdX' in l3_fr:
             energy_loss.append(l3_fr['Stoch_Reco'].eLoss_1500)
             he_stoch.append(l3_fr['Stoch_Reco'].nHEstoch)
@@ -99,12 +109,16 @@ def process_files(input_file):
             he_stoch.append(None)
             he_stoch2.append(None)
 
+        
+
         mass.append(4)
         energy.append(l3_fr['MCPrimary'].energy)
         Xmax.append(l3_fr['MCPrimaryInfo'].ghMaxDepth)
         Xo.append(l3_fr['MCPrimaryInfo'].ghStartDepth)
         firstint.append(l3_fr['MCPrimaryInfo'].firstIntDepth)
         ghredchi.append(l3_fr['MCPrimaryInfo'].ghRedChiSqr)
+        MaxNum.append(l3_fr['MCPrimaryInfo'].ghMaxNum)
+        waveform_weight.append(l3_fr['IceTopWaveformWeight'].value)
         depth = []
         value = []
         for i in l3_fr['MCPrimaryInfo'].longProfile:
@@ -143,14 +157,16 @@ def process_files(input_file):
         m_125.append(l3_fr['m_fit']['m_125'])
         m_o.append(l3_fr['m_fit']['m_o'])
         m_r.append(l3_fr['m_fit']['m_r'])
-        m_z.append(l3_fr['m_fit']['m_z'])
+        m_s.append(l3_fr['m_fit']['m_s'])
+        m_s2.append(l3_fr['m_fit']['m_s2'])
         m_chi2.append(l3_fr['m_fit']['chi2'])
+        fit_status_m.append(l3_fr['m_fit']['fit_status'])
 
+        s_r.append(l3_fr['s_fit']['s_r'])
         s_o.append(l3_fr['s_fit']['s_o'])
-        s_1.append(l3_fr['s_fit']['s_1'])
-        s_mean.append(l3_fr['s_fit']['s_mean'])
-        s_std.append(l3_fr['s_fit']['s_std'])
         s_chi2.append(l3_fr['s_fit']['chi2'])
+        fit_status_s.append(l3_fr['s_fit']['fit_status'])
+        
 
         count = 0
         qtot = 0
@@ -166,7 +182,7 @@ def process_files(input_file):
         
         #my_variables, beta is not related to the age of the shower
         
-        A.append(l3_fr['Laputop_newParams'].value(LaputopParameter.CurvParabA))
+        A.append(l3_fr['CurvatureOnlyParams'].value(LaputopParameter.CurvParabA))
         
     l3_file.close()
     our_map['mass'] = mass
@@ -180,15 +196,16 @@ def process_files(input_file):
     our_map['Xo'] = Xo
     our_map['A'] = A
     our_map['m_125'] = m_125
-    our_map['m_z'] = m_z
     our_map['m_r'] = m_r
+    our_map['m_s'] = m_s
+    our_map['m_s2'] = m_s2
     our_map['m_o'] = m_o
     our_map['m_chi2'] = m_chi2
+    our_map['fit_status_m'] = fit_status_m
+    our_map['s_r'] = s_r
     our_map['s_o'] = s_o
-    our_map['s_1'] = s_1
-    our_map['s_mean'] = s_mean
-    our_map['s_std'] = s_std
     our_map['s_chi2'] = s_chi2
+    our_map['fit_status_s'] = fit_status_s
     our_map['charge'] = charge
     our_map['N'] = N
     our_map['ghRedChiSqr'] = ghredchi
@@ -200,6 +217,8 @@ def process_files(input_file):
     our_map['fit_status'] = fit_status
     our_map['new_chi2'] = chi2
     our_map['difference'] = difference
+    our_map['MaxNum'] = MaxNum
+    our_map['waveform_weight'] = waveform_weight
 
 
     return our_map

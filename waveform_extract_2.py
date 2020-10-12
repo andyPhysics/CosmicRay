@@ -78,7 +78,7 @@ def process_files(file_tuple):
 
         if not passed_all:
             continue
-        
+
         l3_header = l3_fr["I3EventHeader"]
         while l2_file.more():
             try:

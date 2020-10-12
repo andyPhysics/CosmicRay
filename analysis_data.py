@@ -29,6 +29,8 @@ from functools import partial
 
 from methods2 import *
 
+from icecube.frame_object_diff.segments import uncompress
+
 ## Set the log level
 ## Uncomment this in if you're doing code development!
 icetray.set_log_level(icetray.I3LogLevel.LOG_INFO)
@@ -38,23 +40,26 @@ icetray.set_log_level_for_unit('Curvature', icetray.I3LogLevel.LOG_DEBUG)
 c = .299 #m/ns
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-d", "--directory",type=str,default='12360',
+parser.add_argument("-d", "--directory",type=str,default='IC86.2011',
                     dest="directory_number",help="directory number")
 args = parser.parse_args()
 
-output_directory = '/data/user/amedina/CosmicRay/Analysis/'
+output_directory = '/data/user/amedina/CosmicRay/Analysis_data/'
 
-data_set_number = args.directory_number
+directory = args.directory_number
 
-directory = '/data/user/amedina/CosmicRay/I3_Files/%s/'%(data_set_number)
-directory_list = os.listdir(directory)
-file_list = []
-for i in directory_list:
-    file_list.append(directory+i)
+data_set_number = directory.split('/')[-3]
+
+my_list = []
+files = os.listdir(directory)
+files_new = list(np.sort([directory + '/' + i for i in files]))
+empty = False
+if len(files_new) == 1:
+    empty = True
+else:
+    my_list.append([files_new,directory.split('/')[-1],directory.split('/')[-2]])
 
 #### PUT YOUR FAVORITE GCD AND INPUT FILE HERE
-
-GCDFile = '/data/sim/IceTop/2012/filtered/CORSIKA-ice-top/%s/level2/0000000-0000999/GeoCalibDetectorStatus_2012.56063_V1_OctSnow.i3.gz'%(data_set_number)
 
 
 @icetray.traysegment
@@ -87,11 +92,8 @@ class Process_Waveforms(I3Module):
     def Physics(self, frame):
         VEM = frame['IceTopLaputopSeededSelectedHLC'].apply(frame)
         VEM_2 = frame['IceTopLaputopSeededSelectedSLC'].apply(frame)
-        
-        if 'IceTopVEMCalibratedWaveforms' in frame:
-            waveforms = frame['IceTopVEMCalibratedWaveforms']
-        else:
-            waveforms = frame['CalibratedHLCWaveforms']
+
+        waveforms = frame['IceTopVEMCalibratedWaveforms']
 
         HLCWaveforms = dataclasses.I3WaveformSeriesMap()
 
@@ -169,16 +171,16 @@ class Extract_info(I3Module):
             leading_edge = time + (bin_10 - CDF[bin_10]/ninety_slope)*binwidth
             if ninety_slope <= 0 or not np.isfinite(ninety_slope) or not (leading_edge >= time + tmin):
                 leading_edge = time + tmin
-
-            trailing_edge = frame['IceTopHLCPulseInfo'][i][0].trailingEdge
+            
+            #trailing_edge = frame['IceTopHLCPulseInfo'][i][0].trailingEdge
 
             peak_time = time_values[count]
 
-            check_time = time_values <= trailing_edge
+            #check_time = time_values <= trailing_edge
             check_time2 = time_values > leading_edge
             check = np.array(waveform)>0
 
-            check = [(i and j) and k for i,j,k in zip(check_time,check_time2,check)]
+            check = [(i and j) for i,j in zip(check_time2,check)]
             time_good = frame['LaputopHLCVEM'][i][0].time
             new_function = partial(function,t_0=time_good)
 
@@ -471,11 +473,9 @@ class Get_fit(I3Module):
 
         self.PushFrame(frame)
 
-file_list = np.array_split(file_list,5)
-
 def function2(i):
-    I3_OUTFILE = output_directory + data_set_number + '_%s'%(i)+ '.i3.bz2'
-    ROOTFILE = output_directory + data_set_number + '_%s'%(i) + '.root'
+    I3_OUTFILE = output_directory + data_set_number + '_%s_%s'%(i[1],i[2])+ '.i3.bz2'
+    ROOTFILE = output_directory + data_set_number + '_%s_%s'%(i[1],i[2]) + '.root'
 
     tray = I3Tray()
 
@@ -489,35 +489,22 @@ def function2(i):
 
     datareadoutName = 'IceTopLaputopSeededSelectedHLC'
     badtanksName= "BadDomsList"
+    print(i[0])
+    tray.AddModule("I3Reader","reader")(("FileNameList", i[0]))
     
-    tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + list(file_list[i])))
-    
-    tray.AddSegment(ExtractWaveforms, 'IceTop')
-    
+
+    tray.Add(uncompress)
     # Extract HLC pulses
-    tray.AddModule('I3TopHLCPulseExtractor', 'TopHLCPulseExtractor',
-                   PEPulses  = 'IceTopHLCPEPulses',         # Pulses in PE, set to empty string to disable output
-                   PulseInfo = 'IceTopHLCPulseInfo',        # PulseInfo: amplitude, rise time, etc. Empty string to disable
-                   VEMPulses = 'IceTopHLCVEMPulses',        # Pulses in VEM, set to empty string to disable
-                   Waveforms = 'CalibratedHLCWaveforms',   # Input HLC waveforms from WaveCalibrator
-                   BadDomList = "BadDomsList"
-               )
-    
-    # Extract SLC pulses
-    tray.AddModule('I3TopSLCPulseExtractor', 'TopSLCPulseExtractor',
-                   PEPulses  = 'IceTopSLCPEPulses',         # (see above ...)
-                   VEMPulses = 'IceTopSLCVEMPulses',
-                   Waveforms = 'CalibratedSLCWaveforms',   # Input SLC waveforms from WaveCalibrator
-                   BadDomList = "BadDomsListSLC"
-               )
+    #tray.AddModule('I3TopHLCPulseExtractor', 'TopHLCPulseExtractor',
+    #               PulseInfo = 'IceTopHLCPulseInfo',        # PulseInfo: amplitude, rise time, etc. Empty string to disable
+    #               Waveforms = 'IceTopVEMCalibratedHLCWaveforms',   # Input HLC waveforms from WaveCalibrator
+    #           )
     
     tray.AddModule(Process_Waveforms,'Process_wavefomrs')
     
     tray.AddModule(Extract_info)
     
     tray.AddModule(Get_data)
-
-#    tray.AddModule(New_fit)
 
     tray.AddSegment(LaputopStandard,"Laputop_new", pulses='LaputopHLCVEM')
 
@@ -542,8 +529,6 @@ def function2(i):
     wanted_general = ['I3EventHeader',
                       'CalibratedHLCWaveforms',
                       'CalibratedSLCWaveforms',
-                      'MCPrimary',
-                      'MCPrimaryInfo',
                       'LaputopHLCWaveforms',
                       'IceTopWaveformWeight',
                       'IceTopVEMCalibratedWaveforms',
@@ -556,6 +541,8 @@ def function2(i):
                       'LaputopSLCVEM',
                       'Laputop',
                       'LaputopParams',
+                      'Laputop_new',
+                      'Laputop_newParams'
                       'All_pulses',
                       'All_radius',
                       'All_radius_old',
@@ -583,5 +570,6 @@ def function2(i):
     # Just to make sure it's working!
     tray.Execute()
 
-pool = mp.Pool(5)
-pool.map(function2,range(len(file_list)))
+if not empty:
+    pool = mp.Pool(5)
+    pool.map(function2,my_list)

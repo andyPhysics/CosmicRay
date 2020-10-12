@@ -87,11 +87,8 @@ class Process_Waveforms(I3Module):
     def Physics(self, frame):
         VEM = frame['IceTopLaputopSeededSelectedHLC'].apply(frame)
         VEM_2 = frame['IceTopLaputopSeededSelectedSLC'].apply(frame)
-        
-        if 'IceTopVEMCalibratedWaveforms' in frame:
-            waveforms = frame['IceTopVEMCalibratedWaveforms']
-        else:
-            waveforms = frame['CalibratedHLCWaveforms']
+
+        waveforms = frame['CalibratedHLCWaveforms']
 
         HLCWaveforms = dataclasses.I3WaveformSeriesMap()
 
@@ -313,31 +310,8 @@ class Get_data(I3Module):
 
 def function_m(X,m_o,m_r,m_s,m_s2):
     s,rho = X
-    m = m_o + m_r * rho + m_s2*(s-m_s)**2
+    m = m_o + m_r * rho**2 + m_s2*(s-m_s)**2
     return m
-
-def function_s(rho,s_o,s_r):
-    s = s_o + s_r * rho
-    return s
-
-def get_check(function,s,rho,m,sigmam,sigmas,charge):
-    check = (rho<400)&(sigmam<0.1)&(sigmas<0.1)&(charge>0.25)
-    error = np.array([1/i for i in sigmam])
-    fit_m = curve_fit(function,xdata=[s[check],rho[check]],ydata=m[check],bounds=((1e-10,1e-10,1e-10,1e-10),np.inf))
-    
-    new_m = function([s,rho],fit_m[0][0],fit_m[0][1],fit_m[0][2],fit_m[0][3])
-    check = (np.array([(abs(i-j)/j)*100 for i,j in zip(new_m,m)])<=10)&check
-    
-    return check
-
-def get_check_s(function,rho,s,sigmas,check):
-    error = np.array([1/i for i in sigmas])
-    fit_s = curve_fit(function,xdata=rho[check],ydata=s[check],bounds=((1e-10,1e-10),np.inf),sigma=error[check])
-
-    new_s = function(rho,fit_s[0][0],fit_s[0][1])
-    check = (np.array([(abs(i-j)/j)*100 for i,j in zip(new_s,s)])<=10)&check
-
-    return check
 
 class Get_fit(I3Module):
     def __init__(self, context):
@@ -396,12 +370,39 @@ class Get_fit(I3Module):
         sigmam = np.array(sigmam)
         VEM = np.array(VEM)
         output_map_m = dataclasses.I3MapStringDouble()
-        output_map_s = dataclasses.I3MapStringDouble()
         #m_fit
 
         try:
-            check = get_check(function_m,s,rho,m,sigmam,sigmas,np.log10(VEM))
-            fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check])
+            value = []
+            value2 = []
+            value3 = []
+            max_values = [240,260,280,300]
+            min_values = [0,25,50]
+            charge_values = [0,0.25,0.5]
+            for charge_value in charge_values:
+                check = (np.log10(VEM)>charge_value)&(rho<300)
+                fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]))
+                chi2_m = chisquare_value(m[check],function_m(np.array([s[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2],fit_m[0][3]))
+                value.append(abs(chi2_m))
+            min_charge = charge_values[np.argmin(value)]
+
+            for max_value in max_values:
+                check = (np.log10(VEM)>min_charge)&(rho<max_value)
+                fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]))
+                chi2_m = chisquare_value(m[check],function_m(np.array([s[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2],fit_m[0][3]))
+                value2.append(abs(chi2_m))
+
+            max_rho = max_values[np.argmin(value2)]
+
+            for min_value in min_values:
+                check = (np.log10(VEM)>min_charge)&(rho<max_rho)&(rho>min_value)
+                fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]))
+                chi2_m = chisquare_value(m[check],function_m(np.array([s[check],rho[check]]),fit_m[0][0],fit_m[0][1],fit_m[0][2],fit_m[0][3]))
+                value3.append(abs(chi2_m))
+            min_rho = min_values[np.argmin(value3)]
+                
+            check = (np.log10(VEM)>min_charge)&(rho<max_rho)&(rho>min_rho)
+            fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]))
             
             output_map_m['m_o'] = fit_m[0][0]
             output_map_m['m_r'] = fit_m[0][1]
@@ -422,7 +423,7 @@ class Get_fit(I3Module):
         try:
             if failed:
                 check = (np.log10(VEM)>0.5)
-                fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check])
+                fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check],sigma=np.sqrt(chi2[check]))
 
                 output_map_m['m_o'] = fit_m[0][0]
                 output_map_m['m_r'] = fit_m[0][1]
@@ -436,8 +437,6 @@ class Get_fit(I3Module):
                 output_map_m['s_mean'] = np.mean(s[check])
                 output_map_m['s_std'] = np.std(s[check])
 
-        
-
         except (ValueError,TypeError,RuntimeError) as err:
             output_map_m['m_o'] = 0
             output_map_m['m_r'] = 0
@@ -446,28 +445,10 @@ class Get_fit(I3Module):
             output_map_m['m_125'] = 0
             output_map_m['chi2'] = 0
             output_map_m['fit_status'] = 0
-
-        try:
-            check = get_check(function_m,s,rho,m,sigmam,sigmas,np.log10(VEM))
-            check = get_check_s(function_s,rho,s,sigmas,check)
-            error = np.array([1/i for i in sigmas])
-            fit_s = curve_fit(function_s,xdata=rho[check],ydata=s[check],sigma=error[check])
-
-            output_map_s['s_o'] = fit_s[0][0]
-            output_map_s['s_r'] = fit_s[0][1]
-            chi2_s = chisquare_value(s[check],function_s(np.array(rho[check]),fit_s[0][0],fit_s[0][1]))
-            print('chi2_s: ',chi2_s)
-            output_map_s['chi2'] = chi2_s
-            output_map_s['fit_status'] = 1
-
-        except (ValueError,TypeError,RuntimeError) as err:
-            output_map_s['s_o'] = 0
-            output_map_s['s_r'] = 0
-            output_map_s['chi2'] = 0
-            output_map_s['fit_status'] = 0
-
+            output_map_m['s_mean'] = 0
+            output_map_m['s_std'] = 0
         frame['m_fit'] = output_map_m
-        frame['s_fit'] = output_map_s
+
 
         self.PushFrame(frame)
 
@@ -489,8 +470,7 @@ def function2(i):
 
     datareadoutName = 'IceTopLaputopSeededSelectedHLC'
     badtanksName= "BadDomsList"
-    
-    tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + list(file_list[i])))
+    tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile]+list(file_list[i])))
     
     tray.AddSegment(ExtractWaveforms, 'IceTop')
     
@@ -545,8 +525,6 @@ def function2(i):
                       'MCPrimary',
                       'MCPrimaryInfo',
                       'LaputopHLCWaveforms',
-                      'IceTopWaveformWeight',
-                      'IceTopVEMCalibratedWaveforms',
                       'IceTopHLCPEPulses',
                       'IceTopHLCPulseInfo',
                       'IceTopHLCVEMPulses',

@@ -5,7 +5,7 @@ error = extract_data.err
 log = job.log
 notification = never
 request_cpus = 4
-request_memory = 3000
+request_memory = 10000
 
 #arguments = $(Item)
 #Requirements = has_avx =?= true

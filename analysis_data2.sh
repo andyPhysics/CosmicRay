@@ -1,11 +1,11 @@
 # file name: job.condor
-Executable = /home/amedina/CosmicRay.git/trunk/analysis.py
-output = analysis.out
-error = analysis.err
-log = job.log
+Executable = /home/amedina/CosmicRay.git/trunk/analysis_data.py
+output = analysis_data2.out
+error = analysis_data2.err
+log = job_data2.log
 notification = never
 request_cpus = 4
-request_memory = 5000
+request_memory = 6000
 
 #+AccountingGroup="1_week.$ENV(USER)"
 
@@ -17,5 +17,5 @@ getenv = True
 
 arguments = $(Item)
 
-queue 1 Item from arguments.txt
+queue 1 Item from files.txt
 
