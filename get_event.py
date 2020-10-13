@@ -15,11 +15,11 @@ import numpy as np
 import pandas as pd
 
 
-data_set_number = str(12362)
+data_set_number = str(12360)
 filenumber = str(0)
 file_name = '/data/user/amedina/CosmicRay/Analysis/%s_%s.i3.bz2'%(data_set_number,filenumber)
 l3_file = dataio.I3File(file_name,'r')
-output_name = 'Events_iron.csv'
+output_name = 'Events.csv'
 
 event = {}
 
@@ -31,13 +31,10 @@ while l3_file.more():
     time = []
     for i in frame['LaputopHLCVEM'].keys():
         charge.append(frame['LaputopHLCVEM'][i][0].charge)
-    try:
-        check = np.array(charge)>10
-    except RuntimeWarning:
-        continue
-    if (count > 100):
+   
+    if (count > 1000):
         break
-    elif (np.log10(frame['MCPrimary'].energy) < 7)&(np.sum(check)>5):
+    elif (np.log10(frame['MCPrimary'].energy) < 7)&(frame['MCPrimary'].dir.zenith*180/np.pi > 10):
         continue
 
     eventinfo = {}
