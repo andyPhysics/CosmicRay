@@ -178,7 +178,7 @@ class Extract_info(I3Module):
             check_time2 = time_values > leading_edge
             check = np.array(waveform)>0
 
-            check = [(i and j) and k for i,j,k in zip(check_time,check_time2,check)]
+            check = [(i and j) for i,j in zip(check_time2,check)]
             time_good = frame['LaputopHLCVEM'][i][0].time
             new_function = partial(function,t_0=time_good)
 

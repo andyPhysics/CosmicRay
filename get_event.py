@@ -15,11 +15,11 @@ import numpy as np
 import pandas as pd
 
 
-data_set_number = str(12360)
+data_set_number = str(12362)
 filenumber = str(0)
 file_name = '/data/user/amedina/CosmicRay/Analysis/%s_%s.i3.bz2'%(data_set_number,filenumber)
 l3_file = dataio.I3File(file_name,'r')
-output_name = 'Events.csv'
+output_name = 'Events_iron.csv'
 
 event = {}
 
@@ -35,7 +35,7 @@ while l3_file.more():
         check = np.array(charge)>10
     except RuntimeWarning:
         continue
-    if (count > 1000):
+    if (count > 100):
         break
     elif (np.log10(frame['MCPrimary'].energy) < 7)&(np.sum(check)>5):
         continue
@@ -68,7 +68,7 @@ while l3_file.more():
         eventinfo[omkey]['chi2'] = frame['WaveformInfo'][omkey]['chi2']
         eventinfo[omkey]['sigmam'] = frame['WaveformInfo'][omkey]['sigma_s']
         eventinfo[omkey]['sigmas'] = frame['WaveformInfo'][omkey]['sigma_m']
-        eventinfo[omkey]['A'] = frame['Laputop_newParams'].value(LaputopParameter.CurvParabA)
+        eventinfo[omkey]['A'] = frame['CurvatureOnlyParams'].value(LaputopParameter.CurvParabA)
         fe_impedance = frame['I3Calibration'].dom_cal[OMKey(string,dom)].front_end_impedance
         spe_mean = dataclasses.spe_mean(frame['I3DetectorStatus'].dom_status[OMKey(string,dom)],frame['I3Calibration'].dom_cal[OMKey(string,dom)])
         eventinfo[omkey]['feimpedance'] = fe_impedance
@@ -80,8 +80,8 @@ while l3_file.more():
         eventinfo[omkey]['chi2_time'] = frame['LaputopParams'].chi2_time
         eventinfo[omkey]['Laputop_dir_zenith'] = frame['Laputop'].dir.zenith
         eventinfo[omkey]['Laputop_dir_azimuth'] = frame['Laputop'].dir.azimuth
-        eventinfo[omkey]['Laputop_new_zenith'] = frame['Laputop_new'].dir.zenith
-        eventinfo[omkey]['Laputop_new_azimuth'] = frame['Laputop_new'].dir.azimuth
+        eventinfo[omkey]['Laputop_new_zenith'] = frame['CurvatureOnly'].dir.zenith
+        eventinfo[omkey]['Laputop_new_azimuth'] = frame['CurvatureOnly'].dir.azimuth
         eventinfo[omkey]['Laputop_time'] = frame['Laputop'].time
         eventinfo[omkey]['Laputop_pos_x'] = frame['Laputop'].pos.x
         eventinfo[omkey]['Laputop_pos_y'] = frame['Laputop'].pos.y
