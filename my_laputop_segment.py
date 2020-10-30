@@ -73,8 +73,8 @@ def LaputopStandard(tray, name,
         ("StoragePolicy","OnlyBestFit"),
         ("Minimizer",name+"Minuit"),
         ("LogLikelihoodService",name+"ToprecLike2"),     # the three likelihoods                                                                                                          
-        ("LDFFunctions",["","",""]),   # do NOT do the LDF (charge) likelihood                                                                                                       
-        ("CurvFunctions",["gaussparfree","gaussparfree","gaussparfree"]) # yes, do the CURVATURE likelihood                                                                          
+        ("LDFFunctions",[""]),   # do NOT do the LDF (charge) likelihood                                                                                                       
+        ("CurvFunctions",["gaussparfree"]) # yes, do the CURVATURE likelihood                                                                          
     )
     
 

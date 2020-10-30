@@ -1,4 +1,4 @@
-#!/home/amedina/build_stable/bin/python
+#!/home/amedina/build2/bin/python
 import argparse
 import os
 import sys,getopt
@@ -170,11 +170,11 @@ class Extract_info(I3Module):
             if ninety_slope <= 0 or not np.isfinite(ninety_slope) or not (leading_edge >= time + tmin):
                 leading_edge = time + tmin
 
-            trailing_edge = frame['IceTopHLCPulseInfo'][i][0].trailingEdge
+            #trailing_edge = frame['IceTopHLCPulseInfo'][i][0].trailingEdge
 
             peak_time = time_values[count]
 
-            check_time = time_values <= trailing_edge
+            #check_time = time_values <= trailing_edge
             check_time2 = time_values > leading_edge
             check = np.array(waveform)>0
 
@@ -313,15 +313,16 @@ class Get_data(I3Module):
 
 def function_m(X,m_o,m_r,m_s,m_s2):
     s,rho = X
-    m = m_o + m_r * rho + m_s2*(s-m_s)**2
+    m = m_o + m_r * rho
+    #+ m_s2*(s-m_s)**2
     return m
 
 def function_s(rho,s_o,s_r):
     s = s_o + s_r * rho
     return s
 
-def get_check(function,s,rho,m,sigmam,sigmas,charge):
-    check = (rho<400)&(sigmam<0.1)&(sigmas<0.1)&(charge>0.25)
+def get_check(function,s,rho,m,sigmam,sigmas,charge,chi2):
+    check = (rho<400)&(sigmam<0.1)&(sigmas<0.1)&(charge>0.25)&(chi2>0)&(chi2<10)
     error = np.array([1/i for i in sigmam])
     fit_m = curve_fit(function,xdata=[s[check],rho[check]],ydata=m[check],bounds=((1e-10,1e-10,1e-10,1e-10),np.inf))
     
@@ -400,8 +401,8 @@ class Get_fit(I3Module):
         #m_fit
 
         try:
-            check = get_check(function_m,s,rho,m,sigmam,sigmas,np.log10(VEM))
-            fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check])
+            check = get_check(function_m,s,rho,m,sigmam,sigmas,np.log10(VEM),chi2)
+            fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check],bounds=((1e-10,1e-10,1e-10,1e-10),np.inf))
             
             output_map_m['m_o'] = fit_m[0][0]
             output_map_m['m_r'] = fit_m[0][1]
@@ -421,8 +422,8 @@ class Get_fit(I3Module):
 
         try:
             if failed:
-                check = (np.log10(VEM)>0.5)
-                fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check])
+                check = (np.log10(VEM)>0.5)&(chi2>0)&(chi2<10)
+                fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check],bounds=((1e-10,1e-10,1e-10,1e-10),np.inf))
 
                 output_map_m['m_o'] = fit_m[0][0]
                 output_map_m['m_r'] = fit_m[0][1]
@@ -448,10 +449,10 @@ class Get_fit(I3Module):
             output_map_m['fit_status'] = 0
 
         try:
-            check = get_check(function_m,s,rho,m,sigmam,sigmas,np.log10(VEM))
+            check = get_check(function_m,s,rho,m,sigmam,sigmas,np.log10(VEM),chi2)
             check = get_check_s(function_s,rho,s,sigmas,check)
             error = np.array([1/i for i in sigmas])
-            fit_s = curve_fit(function_s,xdata=rho[check],ydata=s[check],sigma=error[check])
+            fit_s = curve_fit(function_s,xdata=rho[check],ydata=s[check],sigma=error[check],bounds=((1e-10,1e-10),np.inf))
 
             output_map_s['s_o'] = fit_s[0][0]
             output_map_s['s_r'] = fit_s[0][1]
@@ -476,7 +477,6 @@ file_list = np.array_split(file_list,5)
 def function2(i):
     I3_OUTFILE = output_directory + data_set_number + '_%s'%(i)+ '.i3.bz2'
     ROOTFILE = output_directory + data_set_number + '_%s'%(i) + '.root'
-
     tray = I3Tray()
 
     ########## SERVICES FOR GULLIVER ##########
@@ -489,27 +489,26 @@ def function2(i):
 
     datareadoutName = 'IceTopLaputopSeededSelectedHLC'
     badtanksName= "BadDomsList"
-    
     tray.AddModule("I3Reader","reader")(("FileNameList", [GCDFile] + list(file_list[i])))
-    
+
     tray.AddSegment(ExtractWaveforms, 'IceTop')
     
     # Extract HLC pulses
-    tray.AddModule('I3TopHLCPulseExtractor', 'TopHLCPulseExtractor',
-                   PEPulses  = 'IceTopHLCPEPulses',         # Pulses in PE, set to empty string to disable output
-                   PulseInfo = 'IceTopHLCPulseInfo',        # PulseInfo: amplitude, rise time, etc. Empty string to disable
-                   VEMPulses = 'IceTopHLCVEMPulses',        # Pulses in VEM, set to empty string to disable
-                   Waveforms = 'CalibratedHLCWaveforms',   # Input HLC waveforms from WaveCalibrator
-                   BadDomList = "BadDomsList"
-               )
+    #tray.AddModule('I3TopHLCPulseExtractor', 'TopHLCPulseExtractor',
+    #               PEPulses  = 'IceTopHLCPEPulses',         # Pulses in PE, set to empty string to disable output
+    #               PulseInfo = 'IceTopHLCPulseInfo',        # PulseInfo: amplitude, rise time, etc. Empty string to disable
+    #               VEMPulses = 'IceTopHLCVEMPulses',        # Pulses in VEM, set to empty string to disable
+    #               Waveforms = 'CalibratedHLCWaveforms',   # Input HLC waveforms from WaveCalibrator
+    #               BadDomList = "BadDomsList"
+    #)
     
     # Extract SLC pulses
-    tray.AddModule('I3TopSLCPulseExtractor', 'TopSLCPulseExtractor',
-                   PEPulses  = 'IceTopSLCPEPulses',         # (see above ...)
-                   VEMPulses = 'IceTopSLCVEMPulses',
-                   Waveforms = 'CalibratedSLCWaveforms',   # Input SLC waveforms from WaveCalibrator
-                   BadDomList = "BadDomsListSLC"
-               )
+    #tray.AddModule('I3TopSLCPulseExtractor', 'TopSLCPulseExtractor',
+    #               PEPulses  = 'IceTopSLCPEPulses',         # (see above ...)
+    #               VEMPulses = 'IceTopSLCVEMPulses',
+    #               Waveforms = 'CalibratedSLCWaveforms',   # Input SLC waveforms from WaveCalibrator
+    #               BadDomList = "BadDomsListSLC"
+    #)
     
     tray.AddModule(Process_Waveforms,'Process_wavefomrs')
     
@@ -517,15 +516,15 @@ def function2(i):
     
     tray.AddModule(Get_data)
 
-#    tray.AddModule(New_fit)
+    #tray.AddModule(New_fit)
 
     tray.AddSegment(LaputopStandard,"Laputop_new", pulses='LaputopHLCVEM')
 
     tray.AddModule(Get_fit)
-
+	
     tray.AddModule("I3Writer","EventWriter")(
-        ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
-        ("Filename",I3_OUTFILE),
+	("Filename",I3_OUTFILE),
+        ("DropOrphanStreams", [icetray.I3Frame.DAQ])
     )
 
     wanted_inice_reco=["Millipede",
@@ -540,15 +539,14 @@ def function2(i):
     wanted_inice_cuts=['IT73AnalysisInIceQualityCuts']
 
     wanted_general = ['I3EventHeader',
-                      'CalibratedHLCWaveforms',
-                      'CalibratedSLCWaveforms',
-                      'MCPrimary',
-                      'MCPrimaryInfo',
                       'LaputopHLCWaveforms',
+                      'LaputopSLCWaveforms',
+                      'MCPrimary',
+                      'MCPrimaryInfo'
                       'IceTopWaveformWeight',
                       'IceTopVEMCalibratedWaveforms',
                       'IceTopHLCPEPulses',
-                      'IceTopHLCPulseInfo',
+                      #'IceTopHLCPulseInfo',
                       'IceTopHLCVEMPulses',
                       'IceTopSLCPEPulses',
                       'IceTopSLCVEMPulses',
@@ -578,10 +576,11 @@ def function2(i):
 
 
 
-   
+    
     # Execute the Tray
     # Just to make sure it's working!
     tray.Execute()
 
 pool = mp.Pool(5)
 pool.map(function2,range(len(file_list)))
+

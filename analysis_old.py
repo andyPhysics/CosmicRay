@@ -505,7 +505,7 @@ def function2(i):
 
     tray.AddModule("I3Writer","EventWriter")(
         ("DropOrphanStreams", [icetray.I3Frame.DAQ]),
-        ("Filename",I3_OUTFILE),
+        ("Filename",I3_OUTFILE)
     )
 
     wanted_inice_reco=["Millipede",

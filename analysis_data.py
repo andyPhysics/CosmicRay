@@ -1,4 +1,4 @@
-#!/home/amedina/build_stable/bin/python
+#!/home/amedina/build2/bin/python
 import argparse
 import os
 import sys,getopt
@@ -315,15 +315,16 @@ class Get_data(I3Module):
 
 def function_m(X,m_o,m_r,m_s,m_s2):
     s,rho = X
-    m = m_o + m_r * rho + m_s2*(s-m_s)**2
+    m = m_o + m_r * rho 
+    #+ m_s2*(s-m_s)**2
     return m
 
 def function_s(rho,s_o,s_r):
     s = s_o + s_r * rho
     return s
 
-def get_check(function,s,rho,m,sigmam,sigmas,charge):
-    check = (rho<400)&(sigmam<0.1)&(sigmas<0.1)&(charge>0.25)
+def get_check(function,s,rho,m,sigmam,sigmas,charge,chi2):
+    check = (rho<400)&(sigmam<0.1)&(sigmas<0.1)&(charge>0.25)&(chi2>0)&(chi2<10)
     error = np.array([1/i for i in sigmam])
     fit_m = curve_fit(function,xdata=[s[check],rho[check]],ydata=m[check],bounds=((1e-10,1e-10,1e-10,1e-10),np.inf))
     
@@ -402,8 +403,8 @@ class Get_fit(I3Module):
         #m_fit
 
         try:
-            check = get_check(function_m,s,rho,m,sigmam,sigmas,np.log10(VEM))
-            fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check])
+            check = get_check(function_m,s,rho,m,sigmam,sigmas,np.log10(VEM),chi2)
+            fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check],bounds=((1e-10,1e-10,1e-10,1e-10),np.inf))
             
             output_map_m['m_o'] = fit_m[0][0]
             output_map_m['m_r'] = fit_m[0][1]
@@ -423,8 +424,8 @@ class Get_fit(I3Module):
 
         try:
             if failed:
-                check = (np.log10(VEM)>0.5)
-                fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check])
+                check = (np.log10(VEM)>0.5)&(chi2>0)&(chi2<10)
+                fit_m = curve_fit(function_m,xdata=[s[check],rho[check]],ydata=m[check],bounds=((1e-10,1e-10,1e-10,1e-10),np.inf))
 
                 output_map_m['m_o'] = fit_m[0][0]
                 output_map_m['m_r'] = fit_m[0][1]
@@ -450,10 +451,10 @@ class Get_fit(I3Module):
             output_map_m['fit_status'] = 0
 
         try:
-            check = get_check(function_m,s,rho,m,sigmam,sigmas,np.log10(VEM))
+            check = get_check(function_m,s,rho,m,sigmam,sigmas,np.log10(VEM),chi2)
             check = get_check_s(function_s,rho,s,sigmas,check)
             error = np.array([1/i for i in sigmas])
-            fit_s = curve_fit(function_s,xdata=rho[check],ydata=s[check],sigma=error[check])
+            fit_s = curve_fit(function_s,xdata=rho[check],ydata=s[check],sigma=error[check],bounds=((1e-10,1e-10),np.inf))
 
             output_map_s['s_o'] = fit_s[0][0]
             output_map_s['s_r'] = fit_s[0][1]
@@ -533,7 +534,7 @@ def function2(i):
                       'IceTopWaveformWeight',
                       'IceTopVEMCalibratedWaveforms',
                       'IceTopHLCPEPulses',
-                      'IceTopHLCPulseInfo',
+                      #'IceTopHLCPulseInfo',
                       'IceTopHLCVEMPulses',
                       'IceTopSLCPEPulses',
                       'IceTopSLCVEMPulses',
