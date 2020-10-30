@@ -1,4 +1,4 @@
-#!/home/amedina/build_stable/bin/python                                                                                                                                                   
+#!/home/amedina/build2/bin/python                                                                                                                                                   
 import argparse
 import os,sys,getopt
 #import logging                                                                                                                                                                           
@@ -118,7 +118,10 @@ def process_files(input_file):
         firstint.append(l3_fr['MCPrimaryInfo'].firstIntDepth)
         ghredchi.append(l3_fr['MCPrimaryInfo'].ghRedChiSqr)
         MaxNum.append(l3_fr['MCPrimaryInfo'].ghMaxNum)
-        waveform_weight.append(l3_fr['IceTopWaveformWeight'].value)
+        try:
+            waveform_weight.append(l3_fr['IceTopWaveformWeight'].value)
+        except KeyError:
+            waveform_weight.append(0)
         depth = []
         value = []
         for i in l3_fr['MCPrimaryInfo'].longProfile:
@@ -167,6 +170,13 @@ def process_files(input_file):
         s_chi2.append(l3_fr['s_fit']['chi2'])
         fit_status_s.append(l3_fr['s_fit']['fit_status'])
         
+        if 's_mean' in l3_fr['m_fit'].keys():
+            s_mean.append(l3_fr['m_fit']['s_mean'])
+            s_std.append(l3_fr['m_fit']['s_std'])
+        else:
+            s_mean.append(0)
+            s_std.append(0)
+        
 
         count = 0
         qtot = 0
@@ -204,6 +214,8 @@ def process_files(input_file):
     our_map['fit_status_m'] = fit_status_m
     our_map['s_r'] = s_r
     our_map['s_o'] = s_o
+    our_map['s_mean'] = s_mean
+    our_map['s_std'] = s_std
     our_map['s_chi2'] = s_chi2
     our_map['fit_status_s'] = fit_status_s
     our_map['charge'] = charge
