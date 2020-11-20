@@ -37,18 +37,18 @@ set_seed(2)
 #Load the data
 
 
-iron = pd.read_csv('Iron.csv')
-proton = pd.read_csv('Proton.csv')
-helium = pd.read_csv('Helium.csv')
-oxygen = pd.read_csv('Oxygen.csv')
-proton2 = pd.read_csv('Proton2.csv')
-iron2 =  pd.read_csv('Iron2.csv')
-proton3 = pd.read_csv('Proton3.csv')
-iron3 = pd.read_csv('Iron3.csv')
-proton4 = pd.read_csv('Proton4.csv')
-iron4 = pd.read_csv('Iron4.csv')
+iron = pd.read_csv('files/Iron.csv')
+proton = pd.read_csv('files/Proton.csv')
+helium = pd.read_csv('files/Helium.csv')
+oxygen = pd.read_csv('files/Oxygen.csv')
+proton2 = pd.read_csv('files/Proton2.csv')
+iron2 =  pd.read_csv('files/Iron2.csv')
+proton3 = pd.read_csv('files/Proton3.csv')
+iron3 = pd.read_csv('files/Iron3.csv')
+proton4 = pd.read_csv('files/Proton4.csv')
+iron4 = pd.read_csv('files/Iron4.csv')
 
-data = pd.read_csv('data.csv')
+data = pd.read_csv('files/data.csv')
 
 
 #Apply the cuts
