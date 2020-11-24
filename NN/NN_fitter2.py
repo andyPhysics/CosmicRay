@@ -136,6 +136,15 @@ for i in y_train:
         weight.append(len(proton)/len(iron))
 weight=np.array(weight)
 
+waveform_weight = []
+
+for i in list(zip(*X_train))[-1]:
+    if i == 0:
+        waveform_weight.append(1)
+        continue
+    waveform_weight.append(i)
+waveform_weight = np.array(waveform_weight)
+
 
 # ## Fit the Neural Network
 
@@ -183,7 +192,7 @@ history = model.fit(X_train1,y_train[:,0:3],
                     shuffle=True,
                     validation_data = (X_validation1,y_validation[:,0:3]),
                     callbacks=[best_model,es],
-                    sample_weight=weight)
+                    sample_weight=waveform_weight)
 
 
 # ## Loss curve to observe how the network performs
