@@ -87,10 +87,12 @@ df_coinc.corr()[['Xmax','log_energy','mass','Xo']]
 from sklearn.model_selection import train_test_split
 
 
-test = df_coinc.sample(frac=0,random_state=rs)
+test = df_coinc.sample(frac=0.2,random_state=42)
 
-output_variables = ['log_energy','Xmax','mass']
-input_variables = ['cos_zenith','S125','log_energy_loss','he_stoch','he_stoch2','m_r','m_o','m_125','s_mean','s_std','A','waveform_weight']
+test.to_csv('test_data.csv')
+
+output_variables = ['log_energy','Xmax','Xo','mass']
+input_variables = ['cos_zenith','S125','log_energy_loss','he_stoch','he_stoch2','m_r','m_o','s_mean','s_std','A','waveform_weight']
 
 
 test_y =  test[output_variables].values
@@ -136,6 +138,15 @@ for i in y_train:
         weight.append(len(proton)/len(iron))
 weight=np.array(weight)
 
+waveform_weight = []
+
+for i in list(zip(*X_train))[-1]:
+    if i == 0:
+        waveform_weight.append(1)
+        continue
+    waveform_weight.append(i)
+waveform_weight = np.array(waveform_weight)
+
 
 # ## Fit the Neural Network
 
@@ -179,11 +190,11 @@ model.compile(optimizer=opt , loss = 'mse')
 
 
 history = model.fit(X_train1,y_train[:,0:3],
-                    epochs=200,
+                    epochs=500,
                     shuffle=True,
                     validation_data = (X_validation1,y_validation[:,0:3]),
-                    callbacks=[best_model,es],
-                    sample_weight=weight)
+                    callbacks=[best_model,es])
+                    #sample_weight=waveform_weight)
 
 
 # ## Loss curve to observe how the network performs
@@ -200,8 +211,8 @@ from sklearn.tree import DecisionTreeRegressor
 tree =BaggingRegressor(DecisionTreeRegressor(splitter='best',max_features='log2',random_state=42),n_estimators=400,bootstrap=True,random_state=42)
 
 
-tree.fit(X_train1,y_train[:,0],sample_weight=weight)
-joblib.dump(tree,'Energy_model_%s.pkl'%(rs))
+tree.fit(X[:,0:-1],y[:,0])
+joblib.dump(tree,'Energy_model.pkl')
 
 
 predictions = best_model.predict(X_validation1)
@@ -228,14 +239,6 @@ def quadratic_function(x,m,b):
 value = [(i-j) for i,j in zip(xmax_predictions,xmax)]
 
 
-#test_xmax = np.array(list(zip(*test_y)))[1]
-#mass2 = np.array(list(zip(*test_y)))[2]
-
-
-#check_predictions = best_model.predict(test_X[:,0:-1])
-#check_predictions2 = tree.predict(test_X[:,0:-1])
-
-
 from sklearn.linear_model import LinearRegression
 
 
@@ -246,12 +249,9 @@ line_model.fit(xmax_predictions.reshape(-1,1),value)
 joblib.dump(line_model,'Xmax_bias_correction_%s.pkl'%(rs))
 
 bias = line_model.predict(xmax_predictions.reshape(-1,1))
-#bias2 = line_model.predict(test_xmax.reshape(-1,1))
 
 
 xmax_predictions = np.array([(i-j) for i,j in zip(xmax_predictions,bias)])
-#xmax_predictions2 = np.array([(i-j) for i,j in zip(list(zip(*check_predictions))[1],bias2)])
-#mass_predictions2 = np.array(list(zip(*check_predictions))[-1])
 
 
 
@@ -269,14 +269,8 @@ energy = np.array(energy)
 
 
 mass_check = np.array(list(zip(*y_validation))[-1])
-#mass_check2 = np.array(list(zip(*test_y))[3])
 
-
-#energy_true = list(zip(*test_y))[0]
 energy_bins = np.linspace(6.5,8,11)
-
-
-#xmax_true = np.array(list(zip(*test_y))[1])
 
 
 mass_predictor =BaggingRegressor(DecisionTreeRegressor(splitter='best',random_state=42),random_state=42)

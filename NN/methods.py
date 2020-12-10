@@ -2,6 +2,11 @@ import numpy as np
 from sklearn.utils import resample
 import matplotlib.pylab as plt
 import matplotlib
+from scipy.optimize import curve_fit
+
+def weight_function(N,a,b):
+    y = a * N + b
+    return y
 
 def new_df(df,mass):
     df['mass'] = [mass for i in range(len(df))]
@@ -17,18 +22,43 @@ def new_df(df,mass):
     new = [(i-j) for i,j in zip(df['firstint'],df['Xo'])]
     df['new'] = new
     df['new_s125'] = [i + 125*j for i,j in zip(df['s_o'],df['s_r'])]
+    df['delta_L'] = df['Xmax'] - df['firstint']
+    energy_cut = []
+    for i in df['log_energy']:
+        if i > 7.0:
+            energy_cut.append(True)
+            continue
+        elif np.random.random() < 0.5:
+            energy_cut.append(True)
+            continue
+        energy_cut.append(False)
+        
+    fit = curve_fit(weight_function,df['N'][(df['waveform_weight']!=0)&(df['N']<75)],np.log10(df['waveform_weight'][(df['waveform_weight']!=0)&(df['N']<75)]))
+    
+    new_waveform_weight = []
+    for i in range(len(df['waveform_weight'])):
+        if (df['waveform_weight'].values[i] == 0)&(df['N'].values[i]<100):
+            new_waveform_weight.append(10**weight_function(df['N'].values[i],fit[0][0],fit[0][1]))
+            continue
+        elif (df['waveform_weight'].values[i] == 0)&(df['N'].values[i]>=100):
+            new_waveform_weight.append(1)
+            continue
+        new_waveform_weight.append(df['waveform_weight'].values[i])
+    df['new_waveform_weight'] = new_waveform_weight
+    
     df = df.loc[(df['Xmax']<900)&
                 (df['Xmax']>400)&
+                (np.array(energy_cut))&
                 (df['ghRedChiSqr']<400)&
                 (abs(df['max_check'])<20)&
-                (df['S125']>0.5)&
+                (df['S125']>0)&
                 (df['fit_status_m']!=0)&
                 (df['fit_status_m']!=2)&
                 (df['m_chi2']>1e-4)&
                 (df['log_m_r']>-5)&
                 (df['log_m_r']<-1)&
                 (df['m_125']<6)&
-                #(df['waveform_weight']!=0)&
+                (df['A']>1e-4)&
                (df['zenith']<45*(np.pi/180))]
     return df
 
@@ -43,14 +73,14 @@ def new_df_data(df):
     m_125 = df['m_125'].values
     df['new_s125'] = [i + 125*j for i,j in zip(df['s_o'],df['s_r'])]
     df = df.loc[
-                (df['S125']>0.5)&
+                (df['S125']>0)&
                 (df['fit_status_m']!=0)&
                 (df['fit_status_m']!=2)&
                 (df['m_chi2']>1e-4)&
                 (df['log_m_r']>-5)&
                 (df['log_m_r']<-1)&
                 (df['m_125']<6)&
-                #(df['waveform_weight']!=0)&
+                (df['A']>1e-4)&
                (df['zenith']<45*(np.pi/180))]
     return df
 
