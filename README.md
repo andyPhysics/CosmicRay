@@ -75,7 +75,15 @@ Feel free to ignore
 
 ## NN
 
-**files -- This contains all the information needed to train the network
+**files** -- This contains all the files needed to train the network, along with the models that I have trained
+
+Key files to keep in mind are data.csv, Proton.csv, Helium.csv, Oxygen.csv, and Iron.csv
+
+Models - 
+
+- NN -- model_coinc_best_[0-5].h5
+- Decision Tree -- Energy_model.pkl
+- Linear Model -- Xmax_bias_correction_[0-4].pkl
 
 
 
