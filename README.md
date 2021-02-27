@@ -1,6 +1,7 @@
 # CosmicRay
 Analysis of CosmicRay Composition
 Author: Andres Medina
+Github: andyPhysics
 Institution: The Ohio State University
 
 This code takes works with simulation data found in the following directory:
@@ -81,9 +82,37 @@ Key files to keep in mind are data.csv, Proton.csv, Helium.csv, Oxygen.csv, and 
 
 Models - 
 
-- NN -- model_coinc_best_[0-5].h5
+- NN -- model_coinc_best_[0-4].h5
 - Decision Tree -- Energy_model.pkl
 - Linear Model -- Xmax_bias_correction_[0-4].pkl
+
+Correction number correspond to model_coinc_best number
+
+### ipython Notebooks
+
+Composition.ipynb -- This is the final notebook that takes networks and produces the KDEs for composition comparisons
+
+model_plotting.ipynb -- Produces plots for the different models compared. This includes H3A, H4A, GST, and GST-3gen
+
+NN_fitter.ipynb -- This file is used for testing individual networks to ensure that there is no overfitting and it has the capabilities of reconstructing both energy and Xmax.
+
+## python files
+
+extract_data.py -- This file extracts all of the necessary parameters from the Analysis folder into csv files that are stored in the csv_files folder. These files that are processed are stored in the files folder for quick access.
+
+extract_data2.py -- This is similar to above but for data.
+
+methods.py -- Provides the majority of the methods used in NN and NN_fitter2. This is where you can define the cuts. This is also used in the ipython notebooks. 
+
+NN.py -- Old version used for training network
+
+NN_fitter2.py -- Updated version and was the model used to produce the networks for reconstructing log10(E/GeV) and Xmax.
+
+### Submitting files
+
+submit.sh -- Used to extract the csv files. 
+
+run_random_state.sh -- Runs a different seed for NN_fitter2.py to produce 5 distinct neural networks trained on a different set of the data. 
 
 
 
