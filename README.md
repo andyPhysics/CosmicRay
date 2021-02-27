@@ -26,7 +26,7 @@ I3_files_data -- I3files that only contains coincident events, these are the fil
  
 Majority of the top level files are those used for data comparisons and extracting the necessary variables and reconstructions
 
-###ipython notebooks
+### ipython notebooks
 
 Check-fit.ipynb -- File used to check the fit for thickness parameters
 
