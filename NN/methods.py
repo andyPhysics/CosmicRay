@@ -12,6 +12,7 @@ def new_df(df,mass):
     df['mass'] = [mass for i in range(len(df))]
     df['log_energy'] = np.log10(df['energy'])
     df['cos_zenith'] = np.cos(df['zenith'])
+    df['log_muon_total'] = np.log10(df['muon_total'])
     df['log_energy_loss'] = np.log10(df['energy_loss'])
     df['log_m_r'] = np.log10(df['m_r'])
     df['log_s_r'] = np.log10(df['s_r'])

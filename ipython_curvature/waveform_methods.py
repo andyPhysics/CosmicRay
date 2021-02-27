@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from plotly.offline import plot
 from ipywidgets import widgets
 import uproot
-from icecube.icetray import *
+#from icecube.icetray import *
 
 
 def process_file(run,event,input_file,geometry):
