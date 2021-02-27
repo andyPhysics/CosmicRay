@@ -75,5 +75,7 @@ Feel free to ignore
 
 ## NN
 
+**files -- This contains all the information needed to train the network
+
 
 
