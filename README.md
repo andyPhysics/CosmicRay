@@ -1,8 +1,11 @@
 # CosmicRay
 Analysis of CosmicRay Composition
-Author: Andres Medina
-Github: andyPhysics
-Institution: The Ohio State University
+
+**Author:** Andres Medina
+
+**Github:** andyPhysics
+
+**Institution:** The Ohio State University
 
 This code takes works with simulation data found in the following directory:
 /data/user/amedina/CosmicRay
