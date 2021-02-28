@@ -83,7 +83,7 @@ Feel free to ignore
 
 Key files to keep in mind are data.csv, Proton.csv, Helium.csv, Oxygen.csv, and Iron.csv
 
-To produce models make sure to run ./run_random_state.sh
+To produce models make sure to run ./run_random_state.sh. This is necessary for Composition.ipynb
 
 ### ipython Notebooks
 
