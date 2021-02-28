@@ -83,13 +83,7 @@ Feel free to ignore
 
 Key files to keep in mind are data.csv, Proton.csv, Helium.csv, Oxygen.csv, and Iron.csv
 
-Models - 
-
-- NN -- model_coinc_best_[0-4].h5
-- Decision Tree -- Energy_model.pkl
-- Linear Model -- Xmax_bias_correction_[0-4].pkl
-
-Correction number correspond to model_coinc_best number
+To produce models make sure to run ./run_random_state.sh
 
 ### ipython Notebooks
 
