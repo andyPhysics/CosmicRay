@@ -3,6 +3,10 @@ from sklearn.utils import resample
 import matplotlib.pylab as plt
 import matplotlib
 from scipy.optimize import curve_fit
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Input, Dense, Dropout, BatchNormalization, LeakyReLU, Concatenate
+import keras
+
 
 def weight_function(N,a,b):
     y = a * N + b
@@ -192,4 +196,53 @@ def calculate_weights(mass_values):
             weights.append(len(proton) / len(iron))
 
     return np.array(weights)
+
+def build_neural_network(input_shape):
+    model = Sequential()
+
+    # Input layer
+    model.add(Input(shape=(input_shape,)))
+
+    # Batch normalization
+    model.add(BatchNormalization())
+
+    # Dense layer with LeakyReLU activation
+    model.add(Dense(12, bias_regularizer=keras.regularizers.l1(1e-1)))
+    model.add(LeakyReLU(alpha=0.2))
+
+    # Another batch normalization
+    model.add(BatchNormalization())
+
+    # Dense layer with LeakyReLU activation
+    model.add(Dense(7))
+    model.add(LeakyReLU(alpha=0.2))
+
+    # Concatenate input with the output of the second dense layer
+    model.add(Concatenate(axis=-1, activity_regularizer=keras.regularizers.l2(1e-5)))
+
+    # Dropout layer
+    model.add(Dropout(0.5))
+
+    # Batch normalization with renormalization
+    model.add(BatchNormalization(renorm=True))
+
+    # Output layer with linear activation for regression
+    model.add(Dense(3, activation='linear', kernel_regularizer=keras.regularizers.l2(1e-5)))
+
+    return model
+
+def train_neural_network(model, X_train, y_train, X_validation, y_validation, checkpoint, early_stopping):
+    opt = keras.optimizers.Adam(decay=1e-5)
+
+    model.compile(optimizer=opt, loss='mse')
+
+    history = model.fit(
+        X_train, y_train,
+        epochs=500,
+        shuffle=True,
+        validation_data=(X_validation, y_validation),
+        callbacks=[checkpoint, early_stopping]
+    )
+
+    return history
 

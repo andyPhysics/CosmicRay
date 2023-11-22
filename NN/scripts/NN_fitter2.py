@@ -90,40 +90,9 @@ best_model = keras.callbacks.ModelCheckpoint(model_best,
 
 es = EarlyStopping(monitor='val_loss',patience=20)
 
-input_layer = Input(shape=(len(X_train1[0]),))
+model = build_neural_network(X_train1.shape[1])
 
-model1 = BatchNormalization()(input_layer)
-
-model1 = Dense(12,bias_regularizer=keras.regularizers.l1(1e-1))(model1)
-
-model1 = LeakyReLU(alpha=0.2)(model1)
-
-model2 = BatchNormalization()(model1)
-
-model2 = Dense(7)(model2)
-
-model2 = LeakyReLU(alpha=0.2)(model2)
-
-model3 = Concatenate(axis=-1,activity_regularizer=keras.regularizers.l2(1e-5))([input_layer,model2])
-
-model3 = Dropout(0.5)(model3)
-
-model3 = BatchNormalization(renorm=True)(model3)
-
-prediction1 = Dense(3,activation='linear',kernel_regularizer = keras.regularizers.l2(1e-5))(model3)
-
-model = Model(inputs=input_layer,outputs=prediction1)
-
-opt = keras.optimizers.Adam(decay=1e-5)
-
-model.compile(optimizer=opt , loss = 'mse')
-
-
-history = model.fit(X_train1,y_train[:,0:3],
-                    epochs=500,
-                    shuffle=True,
-                    validation_data = (X_validation1,y_validation[:,0:3]),
-                    callbacks=[best_model,es])
+history = train_neural_network(model, X_train1, y_train[:, 0:3], X_validation1, y_validation[:, 0:3], best_model, es)
 
 
 # ## Loss curve to observe how the network performs
