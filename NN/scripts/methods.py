@@ -75,7 +75,7 @@ def add_data_features(df):
 
 def apply_data_filters(df):
     return df.loc[
-        (df['S125'] > 0) & (df['fit_status_m'].isin([0, 2])) &
+        (df['S125'] > 0) & (~df['fit_status_m'].isin([0, 2])) &
         (df['m_chi2'] > 1e-4) & (-5 < df['log_m_r'] < -1) &
         (df['m_125'] < 6) & (df['A'] > 1e-4) &
         (df['zenith'] < 45 * (np.pi / 180))]
