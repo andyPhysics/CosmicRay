@@ -178,3 +178,18 @@ def cut_values(energy, mass_value=None, mass=[]):
         count.append(np.sum((energy > cut_energy[i]) & (energy < cut_energy[i + 1]) & mass_condition))
     return count
 
+def calculate_weights(mass_values):
+    weights = []
+
+    for mass_value in mass_values:
+        if mass_value == 1:
+            weights.append(1)
+        elif mass_value == 2:
+            weights.append(len(proton) / len(helium))
+        elif mass_value == 3:
+            weights.append(len(proton) / len(oxygen))
+        else:
+            weights.append(len(proton) / len(iron))
+
+    return np.array(weights)
+

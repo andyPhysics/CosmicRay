@@ -20,6 +20,7 @@ import pickle
 from NN.scripts.methods import * 
 import matplotlib
 import joblib
+from sklearn.model_selection import train_test_split, KFold
 
 
 rs = int(sys.argv[1])
@@ -34,81 +35,34 @@ seed(1)
 from tensorflow.random import set_seed
 set_seed(2)
 
-#Load the data
+# Load data
+file_names = ['Iron.csv', 'Proton.csv', 'Helium.csv', 'Oxygen.csv', 'Proton2.csv', 'Iron2.csv', 'Proton3.csv', 'Iron3.csv', 'Proton4.csv', 'Iron4.csv']
+dataframes = [pd.read_csv(f'files/{file}') for file in file_names]
+
+# Apply cuts
+cut_dataframes = [apply_cuts(df, cut_value) for df, cut_value in zip(dataframes, [4, 1, 2, 3, 1, 4, 1, 4, 1, 4])]
+
+# Create master database
+df = pd.concat(cut_dataframes)
+
+# Ensure log_energy_loss is not NaN
+df_coinc = df[~df['log_energy_loss'].isna()].reset_index()
 
 
-iron = pd.read_csv('files/Iron.csv')
-proton = pd.read_csv('files/Proton.csv')
-helium = pd.read_csv('files/Helium.csv')
-oxygen = pd.read_csv('files/Oxygen.csv')
-proton2 = pd.read_csv('files/Proton2.csv')
-iron2 =  pd.read_csv('files/Iron2.csv')
-proton3 = pd.read_csv('files/Proton3.csv')
-iron3 = pd.read_csv('files/Iron3.csv')
-proton4 = pd.read_csv('files/Proton4.csv')
-iron4 = pd.read_csv('files/Iron4.csv')
-
-data = pd.read_csv('files/data.csv')
-
-
-#Apply the cuts
-
-iron = new_df(iron,4)
-proton = new_df(proton,1)
-helium = new_df(helium,2)
-oxygen = new_df(oxygen,3)
-proton2 = new_df(proton2,1)
-iron2 = new_df(iron2,4)
-proton3 = new_df(proton3,1)
-iron3 = new_df(iron3,4)
-proton4 = new_df(proton4,1)
-iron4 = new_df(iron4,4)
-
-#Create a master database
-
-df = iron.append(proton)
-df = df.append(helium)
-df = df.append(oxygen)
-
-#Ensuring that log_energy_loss is not nan
-
-check = [math.isnan(i)==0 for i in df['log_energy_loss'].values]
-
-
-df_coinc = df[check]
-
-df_coinc = df_coinc.reset_index()
-
-df_coinc.corr()[['Xmax','log_energy','mass','Xo']]
-
-
-# ## Make train test splits and data
-
-from sklearn.model_selection import train_test_split
-
-
-test = df_coinc.sample(frac=0.2,random_state=42)
-
+# Make train test splits
+test_size = 0.2
+test, df_coinc = train_test_split(df_coinc, test_size=test_size, random_state=42)
 test.to_csv('test_data.csv')
 
-output_variables = ['log_energy','Xmax','Xo','mass']
-input_variables = ['cos_zenith','S125','log_energy_loss','he_stoch','he_stoch2','m_r','m_o','s_mean','s_std','A','waveform_weight']
+# Define input and output variables
+output_variables = ['log_energy', 'Xmax', 'Xo', 'mass']
+input_variables = ['cos_zenith', 'S125', 'log_energy_loss', 'he_stoch', 'he_stoch2', 'm_r', 'm_o', 's_mean', 's_std', 'A', 'waveform_weight']
 
+test_y, test_X = test[output_variables].values, test[input_variables].values
+y, X = df_coinc[output_variables].values, df_coinc[input_variables].values
 
-test_y =  test[output_variables].values
-test_X = test[input_variables].values
-
-df_coinc = df_coinc.drop(test.index)
-df_coinc = df_coinc.reset_index()
-
-
-y = df_coinc[output_variables].values
-X = df_coinc[input_variables].values
-
-from sklearn.model_selection import KFold
-
+# K-fold cross-validation
 kf = KFold(n_splits=5, random_state=42, shuffle=True)
-
 count = 0
 for train_index, test_index in kf.split(X):
     if count == rs:
@@ -116,36 +70,12 @@ for train_index, test_index in kf.split(X):
         y_train, y_validation = y[train_index], y[test_index]
     count += 1
 
-#X_train, X_validation, y_train, y_validation = train_test_split(X, y, test_size=0.2, random_state=rs)
+# Preprocess data
+X_train1, X_validation1 = X_train[:, 0:-1], X_validation[:, 0:-1]
 
 
-variable = list(zip(*X_train))
-X_train1 = X_train[:,0:-1]
-X_validation1 = X_validation[:,0:-1]
-
-
-#Weight of models ensuring that masses are taken into consideration equallly
-
-weight = []
-for i in y_train:
-    if i[0] == 1:
-        weight.append(1)
-    elif i[0] == 2:
-        weight.append(len(proton)/len(helium))
-    elif i[0] == 3:
-        weight.append(len(proton)/len(oxygen))
-    else:
-        weight.append(len(proton)/len(iron))
-weight=np.array(weight)
-
-waveform_weight = []
-
-for i in list(zip(*X_train))[-1]:
-    if i == 0:
-        waveform_weight.append(1)
-        continue
-    waveform_weight.append(i)
-waveform_weight = np.array(waveform_weight)
+# Weight of models ensuring that masses are taken into consideration equally
+weight = calculate_weights(y_train[:, 0])
 
 
 # ## Fit the Neural Network
@@ -194,7 +124,6 @@ history = model.fit(X_train1,y_train[:,0:3],
                     shuffle=True,
                     validation_data = (X_validation1,y_validation[:,0:3]),
                     callbacks=[best_model,es])
-                    #sample_weight=waveform_weight)
 
 
 # ## Loss curve to observe how the network performs
