@@ -1,5 +1,5 @@
 # file name: job.condor
-Executable = ./analysis.py
+Executable = ./scripts/analysis.py
 output = analysis.out
 error = analysis.err
 log = job.log

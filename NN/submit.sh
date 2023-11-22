@@ -1,5 +1,5 @@
 # file name: job.condor
-Executable = /home/amedina/CosmicRay.git/trunk/NN/extract_data.py
+Executable = ./scripts/extract_data.py
 output = extract_data.out
 error = extract_data.err
 log = job.log

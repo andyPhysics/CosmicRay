@@ -17,7 +17,7 @@ import seaborn as sns
 import corner
 import sys,os
 import pickle
-from methods import * 
+from NN.scripts.methods import * 
 import matplotlib
 import joblib
 

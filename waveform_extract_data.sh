@@ -1,5 +1,5 @@
 # file name: job.condor
-Executable = ./waveform_extract_data.py
+Executable = ./scripts/waveform_extract_data.py
 output = analysis_data.out
 error = analysis_data.err
 log = job_data.log
