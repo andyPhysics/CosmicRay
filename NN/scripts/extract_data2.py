@@ -44,36 +44,12 @@ def get_chi2(x_true,x_predicted):
     return chi2
 
 def process_files(input_file):
-    our_map = {}
-
-    zenith = []
-    S125 = []
-    energy_loss = []
-    he_stoch = []
-    he_stoch2 = []
-    
-    A = []
-
-    m_125 = []
-    m_s2 = []
-    m_s = []
-    m_r = []
-    m_o = []
-    m_chi2 = []
-    fit_status_m = []
-
-    s_r = []
-    s_o = []
-    s_chi2 = []
-    fit_status_s = []
-
-    s_mean = []
-    s_std = []
-
-    charge = []
-    N = []
-
-    waveform_weight = []
+    our_map = {
+        'zenith': [], 'S125': [], 'energy_loss': [], 'he_stoch': [], 'he_stoch2': [],
+        'A': [], 'm_125': [], 'm_r': [], 'm_s': [], 'm_s2': [], 'm_o': [], 'm_chi2': [],
+        'fit_status_m': [], 's_r': [], 's_o': [], 's_mean': [], 's_std': [], 's_chi2': [], 'fit_status_s': [],
+        'charge': [], 'N': [], 'waveform_weight': []
+    }
     
     l3_file = dataio.I3File(input_file,'r')
 
@@ -85,79 +61,50 @@ def process_files(input_file):
             continue
 
         if 'Millipede_dEdX' in l3_fr:
-            energy_loss.append(l3_fr['Stoch_Reco'].eLoss_1500)
-            he_stoch.append(l3_fr['Stoch_Reco'].nHEstoch)
-            he_stoch2.append(l3_fr['Stoch_Reco2'].nHEstoch)
+            our_map['energy_loss'].append(l3_fr['Stoch_Reco'].eLoss_1500)
+            our_map['he_stoch'].append(l3_fr['Stoch_Reco'].nHEstoch)
+            our_map['he_stoch2'].append(l3_fr['Stoch_Reco2'].nHEstoch)
         else:
-            energy_loss.append(None)
-            he_stoch.append(None)
-            he_stoch2.append(None)
+            our_map['energy_loss'].append(None)
+            our_map['he_stoch'].append(None)
+            our_map['he_stoch2'].append(None)
 
-        waveform_weight.append(l3_fr['IceTopWaveformWeight'].value)
+        our_map['A'].append(l3_fr['CurvatureOnlyParams'].value(LaputopParameter.CurvParabA))
+        our_map['zenith'].append(l3_fr['Laputop'].dir.zenith)
+        our_map['S125'].append(l3_fr['LaputopParams'].value(LaputopParameter.Log10_S125))
+        our_map['m_125'].append(l3_fr['m_fit']['m_125'])
+        our_map['m_o'].append(l3_fr['m_fit']['m_o'])
+        our_map['m_r'].append(l3_fr['m_fit']['m_r'])
+        our_map['m_s'].append(l3_fr['m_fit']['m_s'])
+        our_map['m_s2'].append(l3_fr['m_fit']['m_s2'])
+        our_map['m_chi2'].append(l3_fr['m_fit']['chi2'])
+        our_map['fit_status_m'].append(l3_fr['m_fit']['fit_status'])
 
-        zenith.append(l3_fr['Laputop'].dir.zenith)
-        S125.append(l3_fr['LaputopParams'].value(LaputopParameter.Log10_S125))
-        m_125.append(l3_fr['m_fit']['m_125'])
-        m_o.append(l3_fr['m_fit']['m_o'])
-        m_r.append(l3_fr['m_fit']['m_r'])
-        m_s.append(l3_fr['m_fit']['m_s'])
-        m_s2.append(l3_fr['m_fit']['m_s2'])
-        m_chi2.append(l3_fr['m_fit']['chi2'])
-        fit_status_m.append(l3_fr['m_fit']['fit_status'])
+        our_map['s_r'].append(l3_fr['s_fit']['s_r'])
+        our_map['s_o'].append(l3_fr['s_fit']['s_o'])
+        our_map['s_chi2'].append(l3_fr['s_fit']['chi2'])
+        our_map['fit_status_s'].append(l3_fr['s_fit']['fit_status'])
 
-        s_r.append(l3_fr['s_fit']['s_r'])
-        s_o.append(l3_fr['s_fit']['s_o'])
-        s_chi2.append(l3_fr['s_fit']['chi2'])
-        fit_status_s.append(l3_fr['s_fit']['fit_status'])
-
-        if 's_mean' in l3_fr['m_fit'].keys():
-            s_mean.append(l3_fr['m_fit']['s_mean'])
-            s_std.append(l3_fr['m_fit']['s_std'])
-        else:
-            s_mean.append(0)
-            s_std.append(0)
-
+        our_map['s_mean'].append(l3_fr['m_fit'].get('s_mean', 0))
+        our_map['s_std'].append(l3_fr['m_fit'].get('s_std', 0))
 
         count = 0
         qtot = 0
-        for i in l3_fr['LaputopHLCVEM'].keys():
-            if np.isnan(l3_fr['LaputopHLCVEM'][i][0].charge):
-                continue
-            else:
-                count+=1
-                qtot+=l3_fr['LaputopHLCVEM'][i][0].charge
-            
-        charge.append(qtot)
-        N.append(count)
         
-        #my_variables, beta is not related to the age of the shower
-        
-        A.append(l3_fr['CurvatureOnlyParams'].value(LaputopParameter.CurvParabA))
-        
-    l3_file.close()
-    our_map['zenith'] = zenith
-    our_map['S125'] = S125
-    our_map['energy_loss'] = energy_loss
-    our_map['he_stoch'] = he_stoch
-    our_map['he_stoch2'] = he_stoch2
-    our_map['A'] = A
-    our_map['m_125'] = m_125
-    our_map['m_r'] = m_r
-    our_map['m_s'] = m_s
-    our_map['m_s2'] = m_s2
-    our_map['m_o'] = m_o
-    our_map['m_chi2'] = m_chi2
-    our_map['fit_status_m'] = fit_status_m
-    our_map['s_r'] = s_r
-    our_map['s_o'] = s_o
-    our_map['s_chi2'] = s_chi2
-    our_map['s_mean'] = s_mean
-    our_map['s_std'] = s_std
-    our_map['fit_status_s'] = fit_status_s
-    our_map['charge'] = charge
-    our_map['N'] = N
-    our_map['waveform_weight'] = waveform_weight
+        for i in l3_fr['LaputopHLCVEM'].values():
+            if not np.isnan(i[0].charge):
+                count += 1
+                qtot += i[0].charge
 
+        our_map['charge'].append(qtot)
+        our_map['N'].append(count)
+
+        try:
+            our_map['waveform_weight'].append(l3_fr['IceTopWaveformWeight'].value)
+        except KeyError:
+            our_map['waveform_weight'].append(0)
+
+    l3_file.close()
 
     return our_map
 
