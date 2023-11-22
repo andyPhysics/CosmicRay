@@ -46,12 +46,6 @@ The CosmicRay analysis code, authored by Andres Medina, aims to investigate the 
 - **waveform_extract_data.sh**: Obtains waveform files from I3Files_data.
 - **output_files.sh**: Creates a list of files for analysis.
 
-## Unused Section
-
-### ipython_curvature
-
-This section can be ignored.
-
 ## Neural Network (NN) Section
 
 ### Files
