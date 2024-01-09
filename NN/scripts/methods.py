@@ -78,11 +78,14 @@ def add_data_features(df):
     df['new_s125'] = df['s_o'] + 125 * df['s_r']
 
 def apply_data_filters(df):
-    return df.loc[
-        (df['S125'] > 0) & (~df['fit_status_m'].isin([0, 2])) &
-        (df['m_chi2'] > 1e-4) & (-5 < df['log_m_r'] < -1) &
-        (df['m_125'] < 6) & (df['A'] > 1e-4) &
-        (df['zenith'] < 45 * (np.pi / 180))]
+    filters = (df['S125'] > 0) & \
+              (~df['fit_status_m'].isin([0, 2])) & \
+              (df['m_chi2'] > 1e-4) & \
+              (-5 < df['log_m_r']) & (df['log_m_r'] < -1) & \
+              (df['m_125'] < 6) & \
+              (df['A'] > 1e-4) & \
+              (df['zenith'] < 45 * (np.pi / 180))
+    return df.loc[filters]
 
 def binning(x, y, bins, bins_input=None):
     bins_input = bins_input or bins
@@ -232,10 +235,13 @@ def build_neural_network(input_shape):
     return model
 
 def train_neural_network(model, X_train, y_train, X_validation, y_validation, checkpoint, early_stopping):
+    # Define the optimizer
     opt = keras.optimizers.Adam(decay=1e-5)
 
+    # Compile the model with mean squared error loss
     model.compile(optimizer=opt, loss='mse')
 
+    # Train the model
     history = model.fit(
         X_train, y_train,
         epochs=500,
